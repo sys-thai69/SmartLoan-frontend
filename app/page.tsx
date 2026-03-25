@@ -20,7 +20,7 @@ export default function LandingPage() {
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center">
                 <span className="text-white font-bold text-lg">W</span>
               </div>
-              <span className="font-bold text-2xl text-gray-900">WingLoan</span>
+              <span className="font-bold text-2xl text-gray-900">SmartLoan</span>
             </div>
             <div className="flex items-center gap-4">
               <Link
@@ -53,7 +53,7 @@ export default function LandingPage() {
             <span className="text-blue-600">Never Lose a Friend.</span>
           </h1>
           <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto">
-            WingLoan digitalizes informal cash lending between friends, family,
+            SmartLoan digitalizes informal cash lending between friends, family,
             and colleagues. Create shared records both parties agree to - no
             more disputes, no more broken relationships.
           </p>
@@ -183,7 +183,7 @@ export default function LandingPage() {
             Ready to Simplify Your Lending?
           </h2>
           <p className="text-xl text-blue-100 mb-8">
-            Join thousands of Cambodians who trust WingLoan to manage their
+            Join thousands of Cambodians who trust SmartLoan to manage their
             informal loans.
           </p>
           <Link
@@ -204,10 +204,10 @@ export default function LandingPage() {
               <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
                 <span className="text-white font-bold text-sm">W</span>
               </div>
-              <span className="font-bold text-xl text-white">WingLoan</span>
+              <span className="font-bold text-xl text-white">SmartLoan</span>
             </div>
             <p className="text-sm">
-              &copy; {new Date().getFullYear()} WingLoan. A Wing Bank Cambodia
+              &copy; {new Date().getFullYear()} SmartLoan. A Wing Bank Cambodia
               Final Project.
             </p>
           </div>

@@ -56,7 +56,7 @@ export default function RegisterPage() {
             Start Managing Your Loans Today
           </h1>
           <p className="text-blue-100 text-lg mb-8">
-            Join WingLoan and never have another loan dispute with friends or
+            Join SmartLoan and never have another loan dispute with friends or
             family again.
           </p>
           <ul className="space-y-4">
@@ -79,7 +79,7 @@ export default function RegisterPage() {
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center">
                 <span className="text-white font-bold text-xl">W</span>
               </div>
-              <span className="font-bold text-3xl text-gray-900">WingLoan</span>
+              <span className="font-bold text-3xl text-gray-900">SmartLoan</span>
             </Link>
             <p className="text-gray-600 mt-2">Create your free account</p>
           </div>

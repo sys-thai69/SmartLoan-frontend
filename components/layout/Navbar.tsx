@@ -48,7 +48,7 @@ export function Navbar() {
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center">
                 <span className="text-white font-bold text-sm">W</span>
               </div>
-              <span className="font-bold text-xl text-gray-900">WingLoan</span>
+              <span className="font-bold text-xl text-gray-900">SmartLoan</span>
             </Link>
             <div className="flex items-center gap-4">
               <Link href="/login">
@@ -74,7 +74,7 @@ export function Navbar() {
               <span className="text-white font-bold text-sm">W</span>
             </div>
             <span className="font-bold text-xl text-gray-900 hidden sm:block">
-              WingLoan
+              SmartLoan
             </span>
           </Link>
 

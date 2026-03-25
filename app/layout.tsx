@@ -9,7 +9,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "WingLoan - Peer-to-Peer Loan Tracker",
+  title: "SmartLoan - Peer-to-Peer Loan Tracker",
   description: "Digitalize informal cash lending between friends, family, and colleagues. Built for Wing Bank Cambodia.",
   keywords: ["loan", "peer-to-peer", "wing bank", "cambodia", "fintech"],
 };

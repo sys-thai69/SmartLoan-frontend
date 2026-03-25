@@ -43,7 +43,7 @@ export default function LoginPage() {
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center">
               <span className="text-white font-bold text-xl">W</span>
             </div>
-            <span className="font-bold text-3xl text-gray-900">WingLoan</span>
+            <span className="font-bold text-3xl text-gray-900">SmartLoan</span>
           </Link>
           <p className="text-gray-600 mt-2">Welcome back! Please sign in.</p>
         </div>

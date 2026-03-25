@@ -11,7 +11,7 @@ export function Footer() {
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center">
                 <span className="text-white font-bold text-sm">W</span>
               </div>
-              <span className="font-bold text-xl text-gray-900">WingLoan</span>
+              <span className="font-bold text-xl text-gray-900">SmartLoan</span>
             </div>
             <p className="text-sm text-gray-500 max-w-md">
               A peer-to-peer informal loan tracker built for Wing Bank Cambodia.
@@ -101,7 +101,7 @@ export function Footer() {
 
         <div className="mt-8 pt-8 border-t border-gray-200">
           <p className="text-sm text-gray-500 text-center">
-            &copy; {new Date().getFullYear()} WingLoan. A Wing Bank Cambodia
+            &copy; {new Date().getFullYear()} SmartLoan. A Wing Bank Cambodia
             Final Project. Mock payment system for demonstration purposes.
           </p>
         </div>
