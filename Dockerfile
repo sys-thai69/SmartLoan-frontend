@@ -22,8 +22,9 @@ WORKDIR /app
 RUN addgroup -S nextjs && adduser -S nextjs -G nextjs
 
 # Copy necessary files from build stage
-COPY --from=build /app/.next/standalone ./
-COPY --from=build /app/.next/static ./.next/static
+COPY --from=build /app/.next ./.next
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/package*.json ./
 COPY --from=build /app/public ./public
 
 # Set ownership
@@ -38,5 +39,5 @@ ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# Start the application
-CMD ["node", "server.js"]
+# Start the application with next start
+CMD ["npm", "start"]
