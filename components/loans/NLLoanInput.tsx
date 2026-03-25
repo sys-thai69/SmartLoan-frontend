@@ -14,26 +14,17 @@ interface NLLoanInputProps {
 export function NLLoanInput({ onParsed, onConfirm }: NLLoanInputProps) {
   const [input, setInput] = useState('');
   const [parsed, setParsed] = useState<ParsedLoanData | null>(null);
-  const [isTyping, setIsTyping] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [debouncedInput, setDebouncedInput] = useState('');
 
-  // Debounced parsing
+  // Debounce input changes
   useEffect(() => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
 
-    if (!input.trim()) {
-      timeoutRef.current = setTimeout(() => setParsed(null), 0);
-      return;
-    }
-
-    setIsTyping(true);
     timeoutRef.current = setTimeout(() => {
-      const result = parseNaturalLanguageLoan(input);
-      setParsed(result);
-      onParsed(result);
-      setIsTyping(false);
+      setDebouncedInput(input);
     }, 300);
 
     return () => {
@@ -41,7 +32,24 @@ export function NLLoanInput({ onParsed, onConfirm }: NLLoanInputProps) {
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [input, onParsed]);
+  }, [input]);
+
+  // Parse when debounced input changes - setState is intentional here for debounce pattern
+  useEffect(() => {
+    if (!debouncedInput.trim()) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setParsed(null);
+      return;
+    }
+
+    const result = parseNaturalLanguageLoan(debouncedInput);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setParsed(result);
+    onParsed(result);
+  }, [debouncedInput, onParsed]);
+
+  // Compute isTyping based on whether input differs from debouncedInput
+  const isTyping = input !== debouncedInput && input.trim() !== '';
 
   const handleClear = () => {
     setInput('');
