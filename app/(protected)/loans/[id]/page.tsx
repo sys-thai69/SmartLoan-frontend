@@ -26,7 +26,6 @@ import { formatCurrency, formatDate, formatStatus, getDaysOverdue } from '@/lib/
 import {
   ArrowLeft,
   Calendar,
-  User,
   Percent,
   Clock,
   CheckCircle,
@@ -109,13 +108,11 @@ export default function LoanDetailPage() {
     refetch();
   };
 
-  const overdueSchedules = loan.schedule?.filter(
+  // Check for overdue schedules (used for future features)
+  const _overdueSchedules = loan.schedule?.filter(
     (s) => !s.isPaid && getDaysOverdue(s.dueDate) > 0
   ) || [];
-  const totalOverdue = overdueSchedules.reduce((sum, s) => sum + s.amountDue, 0);
-  const daysOverdue = overdueSchedules.length > 0
-    ? Math.max(...overdueSchedules.map((s) => getDaysOverdue(s.dueDate)))
-    : 0;
+  void _overdueSchedules;
 
   return (
     <div className="space-y-6">

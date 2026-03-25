@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
-import { parseNaturalLanguageLoan, formatParsedLoan, getSuggestions, type ParsedLoanData } from '@/lib/nlParser';
+import { useState, useEffect, useRef } from 'react';
+import { parseNaturalLanguageLoan, getSuggestions, type ParsedLoanData } from '@/lib/nlParser';
 import { Card, CardContent, Button, Badge } from '@/components/ui';
 import { formatCurrency } from '@/lib/utils';
-import { Sparkles, Check, AlertCircle, ArrowRight, Mic, X } from 'lucide-react';
+import { Sparkles, Check, AlertCircle, ArrowRight, X } from 'lucide-react';
 
 interface NLLoanInputProps {
   onParsed: (data: ParsedLoanData) => void;
@@ -15,23 +15,32 @@ export function NLLoanInput({ onParsed, onConfirm }: NLLoanInputProps) {
   const [input, setInput] = useState('');
   const [parsed, setParsed] = useState<ParsedLoanData | null>(null);
   const [isTyping, setIsTyping] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Debounced parsing
   useEffect(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
     if (!input.trim()) {
-      setParsed(null);
+      timeoutRef.current = setTimeout(() => setParsed(null), 0);
       return;
     }
 
     setIsTyping(true);
-    const timer = setTimeout(() => {
+    timeoutRef.current = setTimeout(() => {
       const result = parseNaturalLanguageLoan(input);
       setParsed(result);
       onParsed(result);
       setIsTyping(false);
     }, 300);
 
-    return () => clearTimeout(timer);
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
   }, [input, onParsed]);
 
   const handleClear = () => {

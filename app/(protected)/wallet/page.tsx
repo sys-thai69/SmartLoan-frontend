@@ -9,7 +9,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui';
 import { Loader2 } from 'lucide-react';
 
 export default function WalletPage() {
-  const { wallet, balance, transactions, currency, isLoading, topUp, refetch } = useWallet();
+  const { balance, transactions, currency, isLoading, topUp, refetch } = useWallet();
   const [isTopUpOpen, setIsTopUpOpen] = useState(false);
 
   const handleTopUp = async (amount: number) => {

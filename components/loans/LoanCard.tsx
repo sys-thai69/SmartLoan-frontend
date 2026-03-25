@@ -4,7 +4,7 @@ import Link from 'next/link';
 import type { Loan } from '@/types';
 import { Card, CardContent, Badge, getStatusBadgeVariant, Avatar } from '@/components/ui';
 import { formatCurrency, formatDate, formatStatus, calculatePercentPaid } from '@/lib/utils';
-import { Calendar, User, TrendingUp } from 'lucide-react';
+import { Calendar, TrendingUp } from 'lucide-react';
 
 interface LoanCardProps {
   loan: Loan;
