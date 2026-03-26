@@ -36,14 +36,11 @@ export function NLLoanInput({ onParsed, onConfirm }: NLLoanInputProps) {
 
   // Parse when debounced input changes
   useEffect(() => {
-    if (!debouncedInput.trim()) {
-      setParsed(null);
-      return;
-    }
-
-    const result = parseNaturalLanguageLoan(debouncedInput);
+    const result = !debouncedInput.trim() ? null : parseNaturalLanguageLoan(debouncedInput);
     setParsed(result);
-    onParsed(result);
+    if (result) {
+      onParsed(result);
+    }
   }, [debouncedInput, onParsed]);
 
   // Compute isTyping based on whether input differs from debouncedInput
