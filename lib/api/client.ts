@@ -13,13 +13,17 @@ export const apiClient = axios.create({
   timeout: 30000,
 });
 
-// Request interceptor - add JWT token
+// Request interceptor - add Firebase ID token
 apiClient.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
-    const token = storage.get<string>('token', '');
+  async (config: InternalAxiosRequestConfig) => {
+    // First try to get token from storage (set by AuthContext when Firebase auth state changes)
+    let token = storage.get<string>('token', '');
+
+    // If token exists, add it to headers
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
     return config;
   },
   (error) => {
@@ -31,10 +35,13 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error: AxiosError<ApiError>) => {
-    // Handle 401 - Unauthorized (token expired)
+    // Handle 401 - Unauthorized (token expired or invalid)
     if (error.response?.status === 401) {
+      // Clear stored credentials
       storage.remove('token');
       storage.remove('user');
+
+      // Redirect to login (Firebase will handle the actual sign-out)
       if (typeof window !== 'undefined') {
         window.location.href = '/login';
       }

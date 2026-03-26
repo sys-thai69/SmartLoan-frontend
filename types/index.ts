@@ -26,7 +26,15 @@ export interface LoginCredentials {
 export interface RegisterData {
   name: string;
   email: string;
+  phoneNumber: string;
   password: string;
+  emailOtp: string;
+  smsOtp: string;
+}
+
+export interface OtpResponse {
+  success: boolean;
+  message: string;
 }
 
 // ===========================================

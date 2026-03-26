@@ -13,6 +13,31 @@ export const registerSchema = z
   .object({
     name: z.string().min(2, 'Name must be at least 2 characters'),
     email: z.string().email('Please enter a valid email address'),
+    phoneNumber: z.string().regex(/^\+?[1-9]\d{7,14}$/, 'Please enter a valid phone number (e.g., +855123456789)'),
+    password: z.string().min(6, 'Password must be at least 6 characters'),
+    confirmPassword: z.string(),
+    emailOtp: z.string().length(6, 'OTP must be 6 digits'),
+    smsOtp: z.string().length(6, 'OTP must be 6 digits'),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: 'Passwords do not match',
+    path: ['confirmPassword'],
+  });
+
+// Step-by-step validation schemas for multi-step registration
+export const registerStep1Schema = z.object({
+  email: z.string().email('Please enter a valid email address'),
+  phoneNumber: z.string().regex(/^\+?[1-9]\d{7,14}$/, 'Please enter a valid phone number (e.g., +855123456789)'),
+});
+
+export const registerStep2Schema = z.object({
+  emailOtp: z.string().length(6, 'OTP must be 6 digits'),
+  smsOtp: z.string().length(6, 'OTP must be 6 digits'),
+});
+
+export const registerStep3Schema = z
+  .object({
+    name: z.string().min(2, 'Name must be at least 2 characters'),
     password: z.string().min(6, 'Password must be at least 6 characters'),
     confirmPassword: z.string(),
   })
