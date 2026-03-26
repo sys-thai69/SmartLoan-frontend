@@ -37,6 +37,7 @@ export function NLLoanInput({ onParsed, onConfirm }: NLLoanInputProps) {
   // Parse when debounced input changes
   useEffect(() => {
     const result = !debouncedInput.trim() ? null : parseNaturalLanguageLoan(debouncedInput);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setParsed(result);
     if (result) {
       onParsed(result);
