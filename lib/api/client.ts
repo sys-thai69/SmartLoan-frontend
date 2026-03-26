@@ -17,7 +17,7 @@ export const apiClient = axios.create({
 apiClient.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
     // First try to get token from storage (set by AuthContext when Firebase auth state changes)
-    let token = storage.get<string>('token', '');
+    const token = storage.get<string>('token', '');
 
     // If token exists, add it to headers
     if (token && config.headers) {
