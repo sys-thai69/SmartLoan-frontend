@@ -1,0 +1,9 @@
+{
+  "projectId": "prj_smartloan",
+  "orgId": "",
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next",
+  "devCommand": "next dev",
+  "framework": "nextjs",
+  "nodeVersion": "20.x"
+}

@@ -103,9 +103,9 @@ jobs:
       - name: Deploy to Vercel
         run: |
           if [ "${{ github.ref }}" == "refs/heads/main" ]; then
-            vercel --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
+            vercel --prod --yes --token=${{ secrets.VERCEL_TOKEN }} --project-id=${{ secrets.VERCEL_PROJECT_ID }} --org-id=${{ secrets.VERCEL_ORG_ID }}
           else
-            vercel --yes --token=${{ secrets.VERCEL_TOKEN }}
+            vercel --yes --token=${{ secrets.VERCEL_TOKEN }} --project-id=${{ secrets.VERCEL_PROJECT_ID }} --org-id=${{ secrets.VERCEL_ORG_ID }}
           fi
         env:
           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
