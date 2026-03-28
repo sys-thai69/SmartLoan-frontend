@@ -47,16 +47,30 @@ apiClient.interceptors.response.use(
       }
     }
 
-    // Extract error message
-    const message =
-      error.response?.data?.message ||
-      error.message ||
-      'An unexpected error occurred';
+    // Extract error message with better formatting
+    let message = 'An unexpected error occurred';
+
+    if (error.response?.data?.message) {
+      message = error.response.data.message;
+    } else if (error.message === 'Network Error') {
+      message = 'Network error. Please check your connection and try again.';
+    } else if (error.code === 'ECONNABORTED') {
+      message = 'Request timeout. The server took too long to respond.';
+    } else if (error.response?.status === 404) {
+      message = 'Resource not found.';
+    } else if (error.response?.status === 500) {
+      message = 'Server error. Please try again later.';
+    } else if (error.response?.status === 503) {
+      message = 'Service temporarily unavailable. Please try again later.';
+    } else if (error.message) {
+      message = error.message;
+    }
 
     return Promise.reject({
       message,
       errors: error.response?.data?.errors,
       status: error.response?.status,
+      originalError: error,
     });
   }
 );

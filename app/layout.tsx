@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
+import { ErrorProvider } from "@/context/ErrorContext";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { ErrorNotification } from "@/components/ErrorNotification";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -22,7 +25,14 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} h-full`}>
       <body className="min-h-full flex flex-col font-sans antialiased bg-gray-50">
-        <AuthProvider>{children}</AuthProvider>
+        <ErrorProvider>
+          <AuthProvider>
+            <ErrorBoundary>
+              {children}
+              <ErrorNotification />
+            </ErrorBoundary>
+          </AuthProvider>
+        </ErrorProvider>
       </body>
     </html>
   );
