@@ -192,40 +192,18 @@ export default function RegisterPage() {
 
           <Card>
             <CardContent className="p-6">
-              {/* Registration Method Tabs */}
+              {/* Registration Method Tabs - Hidden: Phone OTP coming soon */}
+              {/* TODO: Uncomment Phone tabs when OTP is ready */}
+              {/*
               <div className="flex mb-6 bg-gray-100 rounded-lg p-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setRegisterMethod('email');
-                    setError(null);
-                    setSuccess(null);
-                  }}
-                  className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition-colors flex items-center justify-center gap-2 ${registerMethod === 'email'
-                    ? 'bg-white text-blue-600 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-800'
-                    }`}
-                >
-                  <Mail className="w-4 h-4" />
-                  Email
+                <button type="button" onClick={() => setRegisterMethod('email')} className="...">
+                  <Mail className="w-4 h-4" /> Email
                 </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setRegisterMethod('phone');
-                    setError(null);
-                    setSuccess(null);
-                    setPhoneStep('phone');
-                  }}
-                  className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition-colors flex items-center justify-center gap-2 ${registerMethod === 'phone'
-                    ? 'bg-white text-blue-600 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-800'
-                    }`}
-                >
-                  <Phone className="w-4 h-4" />
-                  Phone
+                <button type="button" onClick={() => setRegisterMethod('phone')} className="...">
+                  <Phone className="w-4 h-4" /> Phone
                 </button>
               </div>
+              */}
 
               {error && (
                 <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm mb-4">
@@ -333,8 +311,8 @@ export default function RegisterPage() {
                 </>
               )}
 
-              {/* Phone Registration Form */}
-              {registerMethod === 'phone' && (
+              {/* Phone Registration Form - DISABLED: Paused for now */}
+              {false && registerMethod === 'phone' && (
                 <>
                   {phoneStep === 'phone' && (
                     <form onSubmit={phoneForm.handleSubmit(onPhoneSubmit)} className="space-y-4">

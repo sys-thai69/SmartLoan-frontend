@@ -20,7 +20,6 @@ import type {
   PlatformStats,
   UserWithStats,
   RepaymentScheduleItem,
-  OtpResponse,
 } from '@/types';
 
 // ===========================================
@@ -28,21 +27,6 @@ import type {
 // ===========================================
 
 export const authApi = {
-  sendEmailOtp: async (email: string): Promise<OtpResponse> => {
-    const response = await apiClient.post<OtpResponse>('/auth/send-email-otp', { email });
-    return response.data;
-  },
-
-  sendSmsOtp: async (phoneNumber: string): Promise<OtpResponse> => {
-    const response = await apiClient.post<OtpResponse>('/auth/send-sms-otp', { phoneNumber });
-    return response.data;
-  },
-
-  verifyOtp: async (target: string, type: 'EMAIL' | 'SMS', code: string): Promise<OtpResponse> => {
-    const response = await apiClient.post<OtpResponse>('/auth/verify-otp', { target, type, code });
-    return response.data;
-  },
-
   register: async (data: RegisterData): Promise<AuthResponse> => {
     const response = await apiClient.post<AuthResponse>('/auth/register', data);
     return response.data;

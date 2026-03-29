@@ -147,36 +147,18 @@ export default function LoginPage() {
 
         <Card>
           <CardContent className="p-6">
-            {/* Login Method Tabs */}
+            {/* Login Method Tabs - Hidden: Phone OTP coming soon */}
+            {/* TODO: Uncomment Phone tabs when OTP is ready */}
+            {/*
             <div className="flex mb-6 bg-gray-100 rounded-lg p-1">
-              <button
-                type="button"
-                onClick={() => {
-                  setLoginMethod('email');
-                  setError(null);
-                }}
-                className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${loginMethod === 'email'
-                  ? 'bg-white text-blue-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-800'
-                  }`}
-              >
+              <button type="button" onClick={() => setLoginMethod('email')} className="...">
                 Email
               </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setLoginMethod('phone');
-                  setError(null);
-                  setPhoneStep('phone');
-                }}
-                className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${loginMethod === 'phone'
-                  ? 'bg-white text-blue-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-800'
-                  }`}
-              >
+              <button type="button" onClick={() => setLoginMethod('phone')} className="...">
                 Phone
               </button>
             </div>
+            */}
 
             {error && (
               <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm mb-4">
@@ -259,8 +241,8 @@ export default function LoginPage() {
               </>
             )}
 
-            {/* Phone Login Form */}
-            {loginMethod === 'phone' && (
+            {/* Phone Login Form - DISABLED: Paused for now */}
+            {false && loginMethod === 'phone' && (
               <>
                 {phoneStep === 'phone' && (
                   <form onSubmit={phoneForm.handleSubmit(onPhoneSubmit)} className="space-y-4">

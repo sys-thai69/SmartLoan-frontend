@@ -136,7 +136,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Email/Password Registration
   const registerWithEmail = useCallback(async (data: RegisterWithEmailData) => {
     await signUpWithEmail(data.email, data.password, data.name);
-    // The onAuthStateChange listener will handle the rest
+    // Note: Backend user creation is handled automatically by FirebaseAuthenticationFilter
+    // when the user makes their first authenticated request. The filter calls findOrCreateUser()
+    // which creates the user in the database if they don't exist.
+    // The onAuthStateChange listener will sync the user via syncUserToBackend -> authApi.me()
   }, []);
 
   // Logout
