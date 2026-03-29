@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -8,37 +8,13 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuth } from '@/context/AuthContext';
 import { loginSchema, type LoginFormData } from '@/lib/validations';
 import { Button, Input, Card, CardContent } from '@/components/ui';
-import { Eye, EyeOff, Phone } from 'lucide-react';
-import { z } from 'zod';
-import type { ConfirmationResult } from 'firebase/auth';
-
-const phoneLoginSchema = z.object({
-  phoneNumber: z.string().regex(/^\+?[1-9]\d{7,14}$/, 'Please enter a valid phone number (e.g., +855123456789)'),
-});
-
-const otpSchema = z.object({
-  otp: z.string().length(6, 'OTP must be 6 digits'),
-});
-
-type PhoneLoginData = z.infer<typeof phoneLoginSchema>;
-type OtpData = z.infer<typeof otpSchema>;
+import { Eye, EyeOff } from 'lucide-react';
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [loginMethod] = useState<'email' | 'phone'>('email');
-  const [phoneStep, setPhoneStep] = useState<'phone' | 'otp'>('phone');
-  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-  const { login, loginWithGoogle, sendPhoneVerification, verifyPhone, initRecaptcha } = useAuth();
+  const { login } = useAuth();
   const router = useRouter();
-
-  // Initialize reCAPTCHA on mount
-  useEffect(() => {
-    if (loginMethod === 'phone') {
-      initRecaptcha('recaptcha-container');
-    }
-  }, [loginMethod, initRecaptcha]);
 
   // Email form
   const {
@@ -49,86 +25,19 @@ export default function LoginPage() {
     resolver: zodResolver(loginSchema),
   });
 
-  // Phone form
-  const phoneForm = useForm<PhoneLoginData>({
-    resolver: zodResolver(phoneLoginSchema),
-  });
-
-  // OTP form
-  const otpForm = useForm<OtpData>({
-    resolver: zodResolver(otpSchema),
-  });
-
   const onEmailSubmit = async (data: LoginFormData) => {
     try {
       setError(null);
       await login(data);
       router.push('/dashboard');
-    } catch (err) {
-      const firebaseError = err as { code?: string; message?: string };
-      if (firebaseError.code === 'auth/invalid-credential') {
-        setError('Invalid email or password');
-      } else if (firebaseError.code === 'auth/user-not-found') {
-        setError('No account found with this email');
-      } else if (firebaseError.code === 'auth/wrong-password') {
-        setError('Incorrect password');
-      } else {
-        setError(firebaseError.message || 'Sign in failed. Please try again.');
-      }
+    } catch (err: unknown) {
+      const error = err as { message?: string };
+      setError(error.message || 'Sign in failed. Please try again.');
     }
   };
 
   const onGoogleSignIn = async () => {
-    try {
-      setError(null);
-      setIsGoogleLoading(true);
-      await loginWithGoogle();
-      router.push('/dashboard');
-    } catch (err) {
-      const firebaseError = err as { code?: string; message?: string };
-      if (firebaseError.code === 'auth/popup-closed-by-user') {
-        // User closed the popup, don't show an error
-        return;
-      }
-      setError(firebaseError.message || 'Google sign-in failed. Please try again.');
-    } finally {
-      setIsGoogleLoading(false);
-    }
-  };
-
-  const onPhoneSubmit = async (data: PhoneLoginData) => {
-    try {
-      setError(null);
-      const result = await sendPhoneVerification(data.phoneNumber);
-      if (result) {
-        setConfirmationResult(result);
-        setPhoneStep('otp');
-      }
-    } catch (err) {
-      const firebaseError = err as { code?: string; message?: string };
-      setError(firebaseError.message || 'Failed to send verification code');
-    }
-  };
-
-  const onOtpSubmit = async (data: OtpData) => {
-    if (!confirmationResult) {
-      setError('Session expired. Please try again.');
-      setPhoneStep('phone');
-      return;
-    }
-
-    try {
-      setError(null);
-      await verifyPhone(confirmationResult, data.otp);
-      router.push('/dashboard');
-    } catch (err) {
-      const firebaseError = err as { code?: string; message?: string };
-      if (firebaseError.code === 'auth/invalid-verification-code') {
-        setError('Invalid verification code');
-      } else {
-        setError(firebaseError.message || 'Verification failed. Please try again.');
-      }
-    }
+    setError('Google sign-in is currently paused. Please use email/password instead.');
   };
 
   return (
@@ -147,19 +56,6 @@ export default function LoginPage() {
 
         <Card>
           <CardContent className="p-6">
-            {/* Login Method Tabs - Hidden: Phone OTP coming soon */}
-            {/* TODO: Uncomment Phone tabs when OTP is ready */}
-            {/*
-            <div className="flex mb-6 bg-gray-100 rounded-lg p-1">
-              <button type="button" onClick={() => setLoginMethod('email')} className="...">
-                Email
-              </button>
-              <button type="button" onClick={() => setLoginMethod('phone')} className="...">
-                Phone
-              </button>
-            </div>
-            */}
-
             {error && (
               <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm mb-4">
                 {error}
@@ -167,7 +63,7 @@ export default function LoginPage() {
             )}
 
             {/* Email Login Form */}
-            {loginMethod === 'email' && (
+            {(
               <>
                 <form onSubmit={handleSubmit(onEmailSubmit)} className="space-y-4">
                   <Input
@@ -210,13 +106,13 @@ export default function LoginPage() {
                   </div>
                 </div>
 
-                {/* Google Sign In */}
+                {/* Google Sign In - Currently paused */}
                 <Button
                   type="button"
                   variant="outline"
                   className="w-full"
                   onClick={onGoogleSignIn}
-                  isLoading={isGoogleLoading}
+                  disabled
                 >
                   <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
                     <path
@@ -236,84 +132,8 @@ export default function LoginPage() {
                       d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                     />
                   </svg>
-                  Continue with Google
+                  Google Sign In (Coming Soon)
                 </Button>
-              </>
-            )}
-
-            {/* Phone Login Form - DISABLED: Paused for now */}
-            {false && loginMethod === 'phone' && (
-              <>
-                {phoneStep === 'phone' && (
-                  <form onSubmit={phoneForm.handleSubmit(onPhoneSubmit)} className="space-y-4">
-                    <div className="text-center mb-4">
-                      <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-3">
-                        <Phone className="w-6 h-6 text-blue-600" />
-                      </div>
-                      <p className="text-sm text-gray-600">
-                        Enter your phone number to receive a verification code
-                      </p>
-                    </div>
-
-                    <Input
-                      label="Phone Number"
-                      type="tel"
-                      placeholder="+855 12 345 6789"
-                      error={phoneForm.formState.errors.phoneNumber?.message}
-                      {...phoneForm.register('phoneNumber')}
-                    />
-
-                    <Button
-                      type="submit"
-                      className="w-full"
-                      isLoading={phoneForm.formState.isSubmitting}
-                    >
-                      Send Verification Code
-                    </Button>
-                  </form>
-                )}
-
-                {phoneStep === 'otp' && (
-                  <form onSubmit={otpForm.handleSubmit(onOtpSubmit)} className="space-y-4">
-                    <div className="text-center mb-4">
-                      <h3 className="text-lg font-semibold text-gray-900">Enter Verification Code</h3>
-                      <p className="text-sm text-gray-600">
-                        We sent a 6-digit code to your phone
-                      </p>
-                    </div>
-
-                    <Input
-                      label="Verification Code"
-                      type="text"
-                      placeholder="000000"
-                      maxLength={6}
-                      error={otpForm.formState.errors.otp?.message}
-                      {...otpForm.register('otp')}
-                    />
-
-                    <Button
-                      type="submit"
-                      className="w-full"
-                      isLoading={otpForm.formState.isSubmitting}
-                    >
-                      Verify & Sign In
-                    </Button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setPhoneStep('phone');
-                        setError(null);
-                      }}
-                      className="w-full text-sm text-gray-500 hover:text-gray-700"
-                    >
-                      Use a different phone number
-                    </button>
-                  </form>
-                )}
-
-                {/* reCAPTCHA container */}
-                <div id="recaptcha-container" />
               </>
             )}
 

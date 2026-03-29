@@ -8,8 +8,11 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  phoneNumber?: string;
   role: UserRole;
   trustScore: number;
+  emailVerified?: boolean;
+  phoneVerified?: boolean;
   createdAt: string;
 }
 
