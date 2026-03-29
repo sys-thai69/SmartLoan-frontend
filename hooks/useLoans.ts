@@ -26,7 +26,7 @@ export function useLoans() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [addError]);
 
   useEffect(() => {
     fetchLoans();
@@ -167,7 +167,7 @@ export function useOverdueSchedules() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [addError]);
 
   useEffect(() => {
     fetchOverdue();

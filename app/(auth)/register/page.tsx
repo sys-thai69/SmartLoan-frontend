@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuth } from '@/context/AuthContext';
 import { Button, Input, Card, CardContent } from '@/components/ui';
-import { Eye, EyeOff, CheckCircle, Phone, Mail } from 'lucide-react';
+import { Eye, EyeOff, CheckCircle, Phone } from 'lucide-react';
 import { z } from 'zod';
 import type { ConfirmationResult } from 'firebase/auth';
 
@@ -41,7 +41,7 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [registerMethod, setRegisterMethod] = useState<'email' | 'phone'>('email');
+  const [registerMethod] = useState<'email' | 'phone'>('email');
   const [phoneStep, setPhoneStep] = useState<'phone' | 'otp'>('phone');
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);

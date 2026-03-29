@@ -26,7 +26,7 @@ type OtpData = z.infer<typeof otpSchema>;
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [loginMethod, setLoginMethod] = useState<'email' | 'phone'>('email');
+  const [loginMethod] = useState<'email' | 'phone'>('email');
   const [phoneStep, setPhoneStep] = useState<'phone' | 'otp'>('phone');
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);

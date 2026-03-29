@@ -21,6 +21,10 @@ const ErrorContext = createContext<ErrorContextType | undefined>(undefined);
 export function ErrorProvider({ children }: { children: React.ReactNode }) {
   const [errors, setErrors] = useState<ErrorAlert[]>([]);
 
+  const removeError = useCallback((id: string) => {
+    setErrors((prev) => prev.filter((err) => err.id !== id));
+  }, []);
+
   const addError = useCallback(
     (message: string, type: ErrorAlert['type'] = 'error', duration = 5000) => {
       const id = `${Date.now()}-${Math.random()}`;
@@ -35,12 +39,8 @@ export function ErrorProvider({ children }: { children: React.ReactNode }) {
 
       return id;
     },
-    []
+    [removeError]
   );
-
-  const removeError = useCallback((id: string) => {
-    setErrors((prev) => prev.filter((err) => err.id !== id));
-  }, []);
 
   const clearErrors = useCallback(() => {
     setErrors([]);
