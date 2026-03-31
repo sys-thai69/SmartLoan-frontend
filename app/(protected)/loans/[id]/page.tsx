@@ -42,6 +42,7 @@ export default function LoanDetailPage() {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [selectedScheduleItem, setSelectedScheduleItem] = useState<RepaymentScheduleItem | null>(null);
   const [isActioning, setIsActioning] = useState(false);
+  const [paymentMode, setPaymentMode] = useState<'log' | 'pay' | 'auto-debit'>('log');
 
   if (isLoading) {
     return (
@@ -75,8 +76,10 @@ export default function LoanDetailPage() {
   const isLender = loan.lenderId === user?.id;
   const isBorrower = loan.borrowerId === user?.id;
   const otherParty = isLender ? loan.borrower : loan.lender;
-  const canAcceptDecline = isBorrower && loan.status === 'pending_acceptance';
+const canAcceptDecline = isBorrower && loan.status === 'pending_acceptance';
   const canLogPayment = isLender && ['active', 'overdue'].includes(loan.status);
+  const canMakePayment = isBorrower && ['active', 'overdue'].includes(loan.status);
+  const canInitiateAutoDebit = isLender && ['active', 'overdue'].includes(loan.status);
 
   const handleAccept = async () => {
     try {
@@ -98,14 +101,39 @@ export default function LoanDetailPage() {
     }
   };
 
-  const handleLogPayment = (item: RepaymentScheduleItem) => {
+  const handleLogPayment = (item: RepaymentScheduleItem | null) => {
     setSelectedScheduleItem(item);
+    setPaymentMode('log');
+    setIsPaymentModalOpen(true);
+  };
+
+  const handleMakePayment = (item: RepaymentScheduleItem | null) => {
+    setSelectedScheduleItem(item);
+    setPaymentMode('pay');
+    setIsPaymentModalOpen(true);
+  };
+
+  const handleInitiateAutoDebit = (item: RepaymentScheduleItem | null) => {
+    setSelectedScheduleItem(item);
+    setPaymentMode('auto-debit');
     setIsPaymentModalOpen(true);
   };
 
   const handlePaymentSubmit = async (data: LogPaymentFormData) => {
-    await paymentsApi.logPayment(loan.id, data);
-    refetch();
+    try {
+      setIsActioning(true);
+      if (paymentMode === 'pay') {
+        await paymentsApi.makePayment(loan.id, data);
+      } else if (paymentMode === 'auto-debit') {
+        await paymentsApi.initiateAutoDebit(loan.id, data);
+      } else {
+        await paymentsApi.logPayment(loan.id, data);
+      }
+      setIsPaymentModalOpen(false);
+      refetch();
+    } finally {
+      setIsActioning(false);
+    }
   };
 
   // Check for overdue schedules (used for future features)
@@ -229,6 +257,38 @@ export default function LoanDetailPage() {
             </Button>
           </CardFooter>
         )}
+
+        {/* Payment Actions */}
+        {(canMakePayment || canInitiateAutoDebit) && (
+          <CardFooter className="flex justify-end gap-3 border-t border-gray-200">
+            {canMakePayment && (
+              <Button
+                onClick={() => handleMakePayment(loan.schedule?.[0] || null)}
+                disabled={isActioning}
+              >
+                Pay Now
+              </Button>
+            )}
+            {canInitiateAutoDebit && (
+              <Button
+                variant="secondary"
+                onClick={() => handleInitiateAutoDebit(loan.schedule?.[0] || null)}
+                disabled={isActioning}
+              >
+                Initiate Auto-Debit
+              </Button>
+            )}
+            {canLogPayment && (
+              <Button
+                variant="outline"
+                onClick={() => handleLogPayment(loan.schedule?.[0] || null)}
+                disabled={isActioning}
+              >
+                Log Manual Payment
+              </Button>
+            )}
+          </CardFooter>
+        )}
       </Card>
 
       <div className="grid lg:grid-cols-3 gap-6">
@@ -269,6 +329,49 @@ export default function LoanDetailPage() {
               </CardContent>
             </Card>
           )}
+
+          {/* Payment History */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Payment History</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {loan.payments && loan.payments.length > 0 ? (
+                <div className="space-y-3">
+                  {loan.payments.map((payment) => (
+                    <div
+                      key={payment.id}
+                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"
+                    >
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-900">
+                          {formatCurrency(payment.amount)}
+                        </p>
+                        <p className="text-xs text-gray-600 mt-1">
+                          {payment.type === 'manual' ? '💳 Manual Payment' : '🔄 Auto-Debit'}
+                        </p>
+                        {payment.note && (
+                          <p className="text-xs text-gray-500 mt-1">{payment.note}</p>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm text-gray-700">
+                          {formatDate(payment.paymentDate, 'MMM dd, yyyy')}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Paid by {isLender ? 'borrower' : 'you'}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-center py-4">
+                  No payments yet
+                </p>
+              )}
+            </CardContent>
+          </Card>
         </div>
 
         {/* Sidebar */}
@@ -311,6 +414,7 @@ export default function LoanDetailPage() {
         scheduleItem={selectedScheduleItem}
         maxAmount={loan.remaining}
         onSubmit={handlePaymentSubmit}
+        mode={paymentMode}
       />
     </div>
   );

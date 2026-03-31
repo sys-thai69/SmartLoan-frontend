@@ -21,6 +21,7 @@ interface LogPaymentModalProps {
   scheduleItem: RepaymentScheduleItem | null;
   maxAmount: number;
   onSubmit: (data: LogPaymentFormData) => Promise<void>;
+  mode?: 'log' | 'pay' | 'auto-debit';
 }
 
 export function LogPaymentModal({
@@ -29,8 +30,21 @@ export function LogPaymentModal({
   scheduleItem,
   maxAmount,
   onSubmit,
+  mode = 'log',
 }: LogPaymentModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const getTitle = () => {
+    if (mode === 'pay') return 'Make Payment';
+    if (mode === 'auto-debit') return 'Initiate Auto-Debit';
+    return 'Log Payment';
+  };
+
+  const getSubmitLabel = () => {
+    if (mode === 'pay') return 'Pay Now';
+    if (mode === 'auto-debit') return 'Initiate Auto-Debit';
+    return 'Log Payment';
+  };
 
   const {
     register,
@@ -67,7 +81,7 @@ export function LogPaymentModal({
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
-      <ModalHeader onClose={onClose}>Log Payment</ModalHeader>
+      <ModalHeader onClose={onClose}>{getTitle()}</ModalHeader>
       <form onSubmit={handleSubmit(handleFormSubmit)}>
         <ModalContent>
           {scheduleItem && (
@@ -96,16 +110,18 @@ export function LogPaymentModal({
               {...register('amount', { valueAsNumber: true })}
             />
 
-            <Input
-              label="Payment Date"
-              type="date"
-              error={errors.paymentDate?.message}
-              {...register('paymentDate')}
-            />
+            {mode === 'log' && (
+              <Input
+                label="Payment Date"
+                type="date"
+                error={errors.paymentDate?.message}
+                {...register('paymentDate')}
+              />
+            )}
 
             <Input
               label="Note (optional)"
-              placeholder="e.g., Wing transfer ref #123"
+              placeholder={mode === 'pay' ? 'e.g., Wing transfer ref' : 'e.g., Wing transfer ref #123'}
               error={errors.note?.message}
               {...register('note')}
             />
@@ -116,7 +132,7 @@ export function LogPaymentModal({
             Cancel
           </Button>
           <Button type="submit" isLoading={isSubmitting}>
-            Log Payment
+            {getSubmitLabel()}
           </Button>
         </ModalFooter>
       </form>

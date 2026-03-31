@@ -113,6 +113,16 @@ export const paymentsApi = {
     return response.data;
   },
 
+  makePayment: async (loanId: string, data: LogPaymentData): Promise<Payment> => {
+    const response = await apiClient.post<Payment>(`/loans/${loanId}/payments/pay`, data);
+    return response.data;
+  },
+
+  initiateAutoDebit: async (loanId: string, data: LogPaymentData): Promise<Payment> => {
+    const response = await apiClient.post<Payment>(`/loans/${loanId}/payments/auto-debit`, data);
+    return response.data;
+  },
+
   getPayments: async (loanId: string): Promise<Payment[]> => {
     const response = await apiClient.get<Payment[]>(`/loans/${loanId}/payments`);
     return response.data;
