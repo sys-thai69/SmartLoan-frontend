@@ -68,7 +68,17 @@ export const loansApi = {
   },
 
   getById: async (id: string): Promise<LoanWithBalance> => {
-    const response = await apiClient.get<LoanWithBalance>(`/loans/${id}`);
+    const response = await apiClient.get<any>(`/loans/${id}`);
+    // Backend returns { loan: {...}, totalPaid, remaining, percentPaid }
+    // Flatten it to match frontend expectations
+    if (response.data.loan) {
+      return {
+        ...response.data.loan,
+        totalPaid: response.data.totalPaid,
+        remaining: response.data.remaining,
+        percentPaid: response.data.percentPaid,
+      };
+    }
     return response.data;
   },
 
