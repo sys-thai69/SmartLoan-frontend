@@ -68,7 +68,13 @@ export const loansApi = {
   },
 
   getById: async (id: string): Promise<LoanWithBalance> => {
-    const response = await apiClient.get<any>(`/loans/${id}`);
+    interface LoanResponse {
+      loan: Loan;
+      totalPaid: number;
+      remaining: number;
+      percentPaid: number;
+    }
+    const response = await apiClient.get<LoanResponse>(`/loans/${id}`);
     // Backend returns { loan: {...}, totalPaid, remaining, percentPaid }
     // Flatten it to match frontend expectations
     if (response.data.loan) {
@@ -79,7 +85,7 @@ export const loansApi = {
         percentPaid: response.data.percentPaid,
       };
     }
-    return response.data;
+    return response.data as unknown as LoanWithBalance;
   },
 
   accept: async (id: string): Promise<Loan> => {
