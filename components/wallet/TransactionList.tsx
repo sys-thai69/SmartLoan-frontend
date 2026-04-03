@@ -1,5 +1,6 @@
 'use client';
 
+import { useAuth } from '@/context/AuthContext';
 import type { WalletTransaction } from '@/types';
 import { Badge, EmptyState } from '@/components/ui';
 import { formatCurrency, formatDate, formatRelativeTime } from '@/lib/utils';
@@ -11,6 +12,8 @@ interface TransactionListProps {
 }
 
 export function TransactionList({ transactions, currency = 'USD' }: TransactionListProps) {
+  const { user } = useAuth();
+  const currentUserId = user?.id;
   if (transactions.length === 0) {
     return (
       <EmptyState
@@ -85,7 +88,22 @@ export function TransactionList({ transactions, currency = 'USD' }: TransactionL
     }
   };
 
-  const isCredit = (type: string) => type === 'topup' || type === 'refund';
+  // Determine if transaction is incoming (credit) or outgoing (debit)
+  const isCredit = (tx: WalletTransaction): boolean => {
+    switch (tx.type) {
+      case 'topup':
+      case 'refund':
+        return true; // Always incoming
+      case 'transfer':
+      case 'auto_debit':
+        // Incoming if current user is the recipient
+        return currentUserId ? tx.toUser === currentUserId : false;
+      case 'reserved':
+        return false; // Reserved funds are outgoing
+      default:
+        return false;
+    }
+  };
 
   // Group transactions by date
   const groupedTransactions = transactions.reduce<Record<string, WalletTransaction[]>>(
@@ -132,12 +150,12 @@ export function TransactionList({ transactions, currency = 'USD' }: TransactionL
                     className={`text-lg font-semibold ${
                       tx.type === 'reserved'
                         ? 'text-gray-500'
-                        : isCredit(tx.type)
+                        : isCredit(tx)
                         ? 'text-green-600'
                         : 'text-gray-900'
                     }`}
                   >
-                    {tx.type === 'reserved' ? '−' : isCredit(tx.type) ? '+' : '−'}
+                    {tx.type === 'reserved' ? '−' : isCredit(tx) ? '+' : '−'}
                     {formatCurrency(tx.amount, currency)}
                   </p>
                   <Badge
