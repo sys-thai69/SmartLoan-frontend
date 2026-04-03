@@ -165,7 +165,7 @@ export interface Notification {
 // Wallet Types
 // ===========================================
 
-export type TransactionType = 'topup' | 'transfer' | 'auto_debit' | 'refund' | 'loan_disbursement';
+export type TransactionType = 'topup' | 'transfer' | 'auto_debit' | 'refund' | 'loan_disbursement' | 'reserved';
 
 export interface Wallet {
   id: string;

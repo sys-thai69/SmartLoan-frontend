@@ -142,8 +142,10 @@ export default function ProfilePage() {
     try {
       setError(null);
       setIsSaving(true);
-      const updateData: UpdateProfileFormData = { name: data.name };
-      if (data.phoneNumber) updateData.phoneNumber = data.phoneNumber;
+      const updateData: UpdateProfileFormData = {
+        name: data.name,
+        phoneNumber: data.phoneNumber || ''
+      };
       if (data.profilePicture) updateData.profilePicture = data.profilePicture;
       await authApi.updateProfile(updateData);
       await refreshUser();

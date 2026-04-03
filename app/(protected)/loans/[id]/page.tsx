@@ -65,7 +65,12 @@ export default function LoanDetailPage() {
   const [isReporting, setIsReporting] = useState(false);
 
   // Auto-debit state
-  const [autoDebitStatus, setAutoDebitStatus] = useState<{ status: string; amount?: number } | null>(null);
+  const [autoDebitStatus, setAutoDebitStatus] = useState<{
+    status: string;
+    nextDebitDate: string;
+    amount: number;
+    failureCount?: number;
+  } | undefined>(undefined);
   const [isLoadingAutoDebit, setIsLoadingAutoDebit] = useState(false);
 
   if (isLoading) {
@@ -190,7 +195,7 @@ export default function LoanDetailPage() {
 
       if (!response.ok) throw new Error("Failed to disable auto-debit");
 
-      setAutoDebitStatus(null);
+      setAutoDebitStatus(undefined);
       refetch();
       alert("Auto-debit disabled successfully");
     } catch (err) {
