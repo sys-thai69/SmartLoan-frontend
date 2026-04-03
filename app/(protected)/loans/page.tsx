@@ -49,7 +49,7 @@ export default function LoansPage() {
     loadTemplates();
   }, []);
 
-  const useTemplate = (template: LoanTemplate) => {
+  const handleUseTemplate = (template: LoanTemplate) => {
     setSelectedTemplate(template);
     setIsTemplateModalOpen(true);
   };
@@ -178,7 +178,7 @@ export default function LoansPage() {
             {templates.map((template) => (
               <button
                 key={template.id}
-                onClick={() => useTemplate(template)}
+                onClick={() => handleUseTemplate(template)}
                 className="text-left p-3 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 hover:shadow-md transition-shadow"
               >
                 <p className="font-semibold text-gray-900 text-sm mb-2 truncate">

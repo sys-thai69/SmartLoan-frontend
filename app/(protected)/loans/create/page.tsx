@@ -223,7 +223,7 @@ export default function CreateLoanPage() {
                 {...register('autoDebit')}
               />
               <label htmlFor="autoDebit" className="text-sm text-gray-700">
-                Enable auto-debit from borrower's wallet
+                Enable auto-debit from borrower&apos;s wallet
               </label>
             </div>
 

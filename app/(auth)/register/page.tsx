@@ -289,7 +289,7 @@ export default function RegisterPage() {
                   </div>
 
                   <p className="mt-4 text-xs text-slate-500 text-center">
-                    Didn't receive code? Check spam or request a new one.
+                    Didn&apos;t receive code? Check spam or request a new one.
                   </p>
                 </>
               )}

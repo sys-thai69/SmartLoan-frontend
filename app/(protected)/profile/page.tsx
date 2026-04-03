@@ -20,6 +20,7 @@ import {
 import { formatCurrency, formatDate, formatRelativeTime, formatStatus } from '@/lib/utils';
 import { authApi } from '@/lib/api';
 import { updateProfileSchema } from '@/lib/validations';
+import type { UpdateProfileFormData } from '@/lib/validations';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import {
@@ -137,11 +138,11 @@ export default function ProfilePage() {
     }
   };
 
-  const onEditSubmit = async (data: any) => {
+  const onEditSubmit = async (data: UpdateProfileFormData) => {
     try {
       setError(null);
       setIsSaving(true);
-      const updateData: any = { name: data.name };
+      const updateData: UpdateProfileFormData = { name: data.name };
       if (data.phoneNumber) updateData.phoneNumber = data.phoneNumber;
       if (data.profilePicture) updateData.profilePicture = data.profilePicture;
       await authApi.updateProfile(updateData);
@@ -149,8 +150,9 @@ export default function ProfilePage() {
       setIsEditModalOpen(false);
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to update profile');
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      setError(error.response?.data?.message || 'Failed to update profile');
     } finally {
       setIsSaving(false);
     }

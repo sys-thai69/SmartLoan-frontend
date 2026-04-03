@@ -65,7 +65,7 @@ export default function LoanDetailPage() {
   const [isReporting, setIsReporting] = useState(false);
 
   // Auto-debit state
-  const [autoDebitStatus, setAutoDebitStatus] = useState<any>(null);
+  const [autoDebitStatus, setAutoDebitStatus] = useState<{ status: string; amount?: number } | null>(null);
   const [isLoadingAutoDebit, setIsLoadingAutoDebit] = useState(false);
 
   if (isLoading) {
