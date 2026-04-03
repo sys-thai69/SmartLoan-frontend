@@ -1,14 +1,16 @@
 'use client';
 
-import { useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useCallback, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useLoans } from '@/hooks/useLoans';
+import { templatesApi } from '@/lib/api';
 import { NLLoanInput } from '@/components/loans/NLLoanInput';
 import type { ParsedLoanData } from '@/lib/nlParser';
 import { createLoanSchema, type CreateLoanFormData } from '@/lib/validations';
+import type { LoanTemplate } from '@/types';
 import {
   Card,
   CardHeader,
@@ -28,18 +30,23 @@ import {
   PenLine,
   ArrowRight,
   Calculator,
+  Loader2,
 } from 'lucide-react';
 
 type InputMode = 'natural' | 'manual';
 
 export default function QuickLendPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const templateId = searchParams.get('templateId');
   const { createLoan } = useLoans();
   const [mode, setMode] = useState<InputMode>('natural');
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [parsedData, setParsedData] = useState<ParsedLoanData | null>(null);
+  const [isLoadingTemplate, setIsLoadingTemplate] = useState(!!templateId);
+  const [templateData, setTemplateData] = useState<LoanTemplate | null>(null);
 
   // Form for manual mode AND for editing parsed data
   const {
@@ -62,6 +69,38 @@ export default function QuickLendPage() {
     },
   });
 
+  // Load template if templateId is provided
+  useEffect(() => {
+    if (templateId) {
+      const loadTemplate = async () => {
+        try {
+          const templates = await templatesApi.getAll();
+          const found = templates.find((t) => t.id === templateId);
+          if (found) {
+            setTemplateData(found);
+            // Reset form with template data
+            reset({
+              borrowerEmail: '',
+              principal: 0,
+              interestRate: found.interestRate,
+              installments: found.installments,
+              frequency: found.frequency,
+              startDate: new Date().toISOString().split('T')[0],
+              autoDebit: found.autoDebit,
+              templateId: found.id,
+            });
+            setMode('manual'); // Switch to manual mode when template is loaded
+          }
+        } catch (err) {
+          console.error('Failed to load template:', err);
+        } finally {
+          setIsLoadingTemplate(false);
+        }
+      };
+      loadTemplate();
+    }
+  }, [templateId, reset]);
+
   const principal = watch('principal') || 0;
   const interestRate = watch('interestRate') || 0;
   const installments = watch('installments') || 1;
@@ -74,12 +113,12 @@ export default function QuickLendPage() {
 
   // Handle NL confirm - populate form and switch to review mode
   const handleNLConfirm = useCallback((data: ParsedLoanData) => {
-    // Populate form with parsed data
+    // Use the resolved email from backend (NLLoanInput now resolves name → email via API)
     if (data.borrowerEmail) {
       setValue('borrowerEmail', data.borrowerEmail);
-    } else if (data.borrowerName) {
-      // For demo, use name as email placeholder - in real app would look up user
-      setValue('borrowerEmail', `${data.borrowerName.toLowerCase().replace(' ', '.')}@example.com`);
+    } else {
+      // No email resolved — leave empty so user can fill it in manually
+      setValue('borrowerEmail', '');
     }
     if (data.amount) setValue('principal', data.amount);
     if (data.interestRate !== undefined) setValue('interestRate', data.interestRate);
@@ -131,6 +170,14 @@ export default function QuickLendPage() {
     );
   }
 
+  if (isLoadingTemplate) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
   const totalAmount = principal * (1 + interestRate / 100);
   const perInstallment = totalAmount / (installments || 1);
 
@@ -146,35 +193,42 @@ export default function QuickLendPage() {
       </Link>
 
       {/* Header with mode toggle */}
-      <div className="flex items-center justify-between">
+      <div className="space-y-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Quick Lend</h1>
-          <p className="text-gray-600">Create a loan in seconds</p>
+          <p className="text-gray-600">
+            {templateData
+              ? `Using template: ${templateData.templateName}. Just enter borrower email and amount.`
+              : 'Create a loan in seconds'
+            }
+          </p>
         </div>
-        <div className="flex items-center gap-1 p-1 bg-gray-100 rounded-lg">
-          <button
-            onClick={() => setMode('natural')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-              mode === 'natural'
-                ? 'bg-white text-purple-700 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            <Sparkles className="w-4 h-4" />
-            Natural
-          </button>
-          <button
-            onClick={() => setMode('manual')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-              mode === 'manual'
-                ? 'bg-white text-blue-700 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            <PenLine className="w-4 h-4" />
-            Form
-          </button>
-        </div>
+        {!templateData && (
+          <div className="flex items-center gap-1 p-1 bg-gray-100 rounded-lg">
+            <button
+              onClick={() => setMode('natural')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                mode === 'natural'
+                  ? 'bg-white text-purple-700 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <Sparkles className="w-4 h-4" />
+              Natural
+            </button>
+            <button
+              onClick={() => setMode('manual')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                mode === 'manual'
+                  ? 'bg-white text-blue-700 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <PenLine className="w-4 h-4" />
+              Form
+            </button>
+          </div>
+        )}
       </div>
 
       {error && (
@@ -183,8 +237,8 @@ export default function QuickLendPage() {
         </div>
       )}
 
-      {/* Natural Language Mode */}
-      {mode === 'natural' && (
+      {/* Natural Language Mode - Only if no template */}
+      {mode === 'natural' && !templateData && (
         <div className="space-y-4">
           <NLLoanInput onParsed={handleParsed} onConfirm={handleNLConfirm} />
 
@@ -222,7 +276,8 @@ export default function QuickLendPage() {
               <Input
                 label="Borrower Email"
                 type="email"
-                placeholder="borrower@email.com"
+                placeholder="borrower@email.com or phone number"
+                helperText="Tip: Use Natural mode above to search by phone number"
                 error={errors.borrowerEmail?.message}
                 {...register('borrowerEmail')}
               />

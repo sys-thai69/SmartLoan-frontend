@@ -123,7 +123,7 @@ export function QuickLendPanel({ onSubmit }: QuickLendPanelProps) {
           <div className="flex items-center gap-2 mb-2">
             <Sparkles className="w-4 h-4 text-purple-600" />
             <span className="text-sm font-medium text-purple-900">
-              Wing Advisor AI
+              AI Smart Advisor
             </span>
           </div>
           <div className="flex gap-2">

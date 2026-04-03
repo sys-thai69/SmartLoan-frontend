@@ -1,33 +1,36 @@
 import Link from 'next/link';
+import Image from 'next/image';
 
 export function Footer() {
   return (
-    <footer className="bg-white border-t border-gray-200 mt-auto">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <footer className="border-t border-slate-200/60 mt-auto bg-white/50 backdrop-blur-sm">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="col-span-1 md:col-span-2">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center">
-                <span className="text-white font-bold text-sm">W</span>
-              </div>
-              <span className="font-bold text-xl text-gray-900">SmartLoan</span>
+            <div className="flex items-center gap-2.5 mb-4">
+              <Image
+                src="/Smartloan-logo.PNG"
+                alt="SmartLoan"
+                width={32}
+                height={32}
+                className="rounded-lg"
+              />
+              <span className="font-bold text-xl text-slate-900">SmartLoan</span>
             </div>
-            <p className="text-sm text-gray-500 max-w-md">
-              A peer-to-peer informal loan tracker built for Wing Bank Cambodia.
-              Digitalize informal cash lending between friends, family, and
-              colleagues - no more disputes or broken relationships.
+            <p className="text-sm text-slate-500 max-w-md leading-relaxed">
+              A peer-to-peer informal loan tracker that helps friends, family, and colleagues manage loans transparently. Digitalize informal cash lending — no more disputes or broken relationships.
             </p>
           </div>
 
           {/* Links */}
           <div>
-            <h4 className="font-semibold text-gray-900 mb-4">Product</h4>
-            <ul className="space-y-2">
+            <h4 className="font-semibold text-slate-900 mb-4 text-sm uppercase tracking-wider">Product</h4>
+            <ul className="space-y-2.5">
               <li>
                 <Link
                   href="/dashboard"
-                  className="text-sm text-gray-500 hover:text-gray-900"
+                  className="text-sm text-slate-500 hover:text-indigo-600 transition-colors"
                 >
                   Dashboard
                 </Link>
@@ -35,7 +38,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/loans"
-                  className="text-sm text-gray-500 hover:text-gray-900"
+                  className="text-sm text-slate-500 hover:text-indigo-600 transition-colors"
                 >
                   Loans
                 </Link>
@@ -43,7 +46,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/loans/quick"
-                  className="text-sm text-gray-500 hover:text-gray-900"
+                  className="text-sm text-slate-500 hover:text-indigo-600 transition-colors"
                 >
                   Quick Lend
                 </Link>
@@ -51,7 +54,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/wallet"
-                  className="text-sm text-gray-500 hover:text-gray-900"
+                  className="text-sm text-slate-500 hover:text-indigo-600 transition-colors"
                 >
                   Wallet
                 </Link>
@@ -61,12 +64,12 @@ export function Footer() {
 
           {/* Support */}
           <div>
-            <h4 className="font-semibold text-gray-900 mb-4">Support</h4>
-            <ul className="space-y-2">
+            <h4 className="font-semibold text-slate-900 mb-4 text-sm uppercase tracking-wider">Support</h4>
+            <ul className="space-y-2.5">
               <li>
                 <Link
                   href="#"
-                  className="text-sm text-gray-500 hover:text-gray-900"
+                  className="text-sm text-slate-500 hover:text-indigo-600 transition-colors"
                 >
                   Help Center
                 </Link>
@@ -74,7 +77,7 @@ export function Footer() {
               <li>
                 <Link
                   href="#"
-                  className="text-sm text-gray-500 hover:text-gray-900"
+                  className="text-sm text-slate-500 hover:text-indigo-600 transition-colors"
                 >
                   Contact Us
                 </Link>
@@ -82,7 +85,7 @@ export function Footer() {
               <li>
                 <Link
                   href="#"
-                  className="text-sm text-gray-500 hover:text-gray-900"
+                  className="text-sm text-slate-500 hover:text-indigo-600 transition-colors"
                 >
                   Privacy Policy
                 </Link>
@@ -90,7 +93,7 @@ export function Footer() {
               <li>
                 <Link
                   href="#"
-                  className="text-sm text-gray-500 hover:text-gray-900"
+                  className="text-sm text-slate-500 hover:text-indigo-600 transition-colors"
                 >
                   Terms of Service
                 </Link>
@@ -99,10 +102,9 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-8 pt-8 border-t border-gray-200">
-          <p className="text-sm text-gray-500 text-center">
-            &copy; {new Date().getFullYear()} SmartLoan. A Wing Bank Cambodia
-            Final Project. Mock payment system for demonstration purposes.
+        <div className="mt-10 pt-8 border-t border-slate-200/60">
+          <p className="text-sm text-slate-400 text-center">
+            &copy; {new Date().getFullYear()} SmartLoan. All rights reserved.
           </p>
         </div>
       </div>

@@ -38,6 +38,7 @@ export default function TemplatesPage() {
   } = useForm<CreateTemplateFormData>({
     resolver: zodResolver(createTemplateSchema),
     defaultValues: {
+      amount: 0,
       templateName: '',
       interestRate: 0,
       frequency: 'monthly',
@@ -187,6 +188,15 @@ export default function TemplatesPage() {
               placeholder="e.g., Hangout Loan"
               error={errors.templateName?.message}
               {...register('templateName')}
+            />
+
+            <Input
+              label="Principal Amount (USD)"
+              type="number"
+              step="0.01"
+              min="0.01"
+              error={errors.amount?.message}
+              {...register('amount', { valueAsNumber: true })}
             />
 
             <div className="grid grid-cols-2 gap-4">

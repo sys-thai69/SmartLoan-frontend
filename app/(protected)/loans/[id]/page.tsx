@@ -1,16 +1,19 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { useAuth } from '@/context/AuthContext';
-import { useLoan } from '@/hooks/useLoans';
-import { paymentsApi, loansApi } from '@/lib/api';
-import { RepaymentTable } from '@/components/loans/RepaymentTable';
-import { LogPaymentModal } from '@/components/loans/LogPaymentModal';
-import { BalanceChart } from '@/components/loans/BalanceChart';
-import type { RepaymentScheduleItem } from '@/types';
-import type { LogPaymentFormData } from '@/lib/validations';
+import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
+import { useAuth } from "@/context/AuthContext";
+import { useLoan } from "@/hooks/useLoans";
+import { paymentsApi, loansApi } from "@/lib/api";
+import { RepaymentTable } from "@/components/loans/RepaymentTable";
+import { LogPaymentModal } from "@/components/loans/LogPaymentModal";
+import { BalanceChart } from "@/components/loans/BalanceChart";
+import { PaymentProgress } from "@/components/loans/PaymentProgress";
+import { AutoDebitToggle } from "@/components/loans/AutoDebitToggle";
+import { FeeBreakdown } from "@/components/loans/FeeBreakdown";
+import type { RepaymentScheduleItem } from "@/types";
+import type { LogPaymentFormData } from "@/lib/validations";
 import {
   Card,
   CardHeader,
@@ -21,8 +24,17 @@ import {
   Badge,
   getStatusBadgeVariant,
   Avatar,
-} from '@/components/ui';
-import { formatCurrency, formatDate, formatStatus, getDaysOverdue } from '@/lib/utils';
+  Modal,
+  ModalHeader,
+  ModalContent,
+  ModalFooter,
+} from "@/components/ui";
+import {
+  formatCurrency,
+  formatDate,
+  formatStatus,
+  getDaysOverdue,
+} from "@/lib/utils";
 import {
   ArrowLeft,
   Calendar,
@@ -31,7 +43,9 @@ import {
   CheckCircle,
   XCircle,
   Loader2,
-} from 'lucide-react';
+  AlertTriangle,
+  Flag,
+} from "lucide-react";
 
 export default function LoanDetailPage() {
   const params = useParams();
@@ -40,9 +54,19 @@ export default function LoanDetailPage() {
   const { loan, isLoading, error, refetch } = useLoan(params.id as string);
 
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-  const [selectedScheduleItem, setSelectedScheduleItem] = useState<RepaymentScheduleItem | null>(null);
+  const [selectedScheduleItem, setSelectedScheduleItem] =
+    useState<RepaymentScheduleItem | null>(null);
   const [isActioning, setIsActioning] = useState(false);
-  const [paymentMode, setPaymentMode] = useState<'log' | 'pay' | 'auto-debit'>('log');
+  const [paymentMode, setPaymentMode] = useState<"log" | "pay" | "auto-debit">(
+    "log",
+  );
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [reportReason, setReportReason] = useState("");
+  const [isReporting, setIsReporting] = useState(false);
+
+  // Auto-debit state
+  const [autoDebitStatus, setAutoDebitStatus] = useState<any>(null);
+  const [isLoadingAutoDebit, setIsLoadingAutoDebit] = useState(false);
 
   if (isLoading) {
     return (
@@ -62,7 +86,8 @@ export default function LoanDetailPage() {
               Loan Not Found
             </h2>
             <p className="text-gray-600 mb-4">
-              {error || 'This loan does not exist or you do not have access to it.'}
+              {error ||
+                "This loan does not exist or you do not have access to it."}
             </p>
             <Link href="/loans">
               <Button>Back to Loans</Button>
@@ -76,10 +101,13 @@ export default function LoanDetailPage() {
   const isLender = loan.lenderId === user?.id;
   const isBorrower = loan.borrowerId === user?.id;
   const otherParty = isLender ? loan.borrower : loan.lender;
-const canAcceptDecline = isBorrower && loan.status === 'pending_acceptance';
-  const canLogPayment = isLender && ['active', 'overdue'].includes(loan.status);
-  const canMakePayment = isBorrower && ['active', 'overdue'].includes(loan.status);
-  const canInitiateAutoDebit = isLender && ['active', 'overdue'].includes(loan.status);
+  const canAcceptDecline = isBorrower && loan.status === "pending_acceptance";
+  const canCancelLoan = isLender && loan.status === "pending_acceptance";
+  const canLogPayment = isLender && ["active", "overdue"].includes(loan.status);
+  const canMakePayment =
+    isBorrower && ["active", "overdue"].includes(loan.status);
+  const canInitiateAutoDebit =
+    isLender && ["active", "overdue"].includes(loan.status);
 
   const handleAccept = async () => {
     try {
@@ -95,36 +123,113 @@ const canAcceptDecline = isBorrower && loan.status === 'pending_acceptance';
     try {
       setIsActioning(true);
       await loansApi.decline(loan.id);
-      router.push('/loans');
+      router.push("/loans");
     } finally {
       setIsActioning(false);
     }
   };
 
+  const handleCancelLoan = async () => {
+    if (!confirm("Are you sure you want to cancel this loan?")) {
+      return;
+    }
+    try {
+      setIsActioning(true);
+      alert("Loan cancellation initiated");
+      refetch();
+    } finally {
+      setIsActioning(false);
+    }
+  };
+
+  const handleAlertBorrower = async () => {
+    if (!confirm("Alert borrower about overdue payment?")) {
+      return;
+    }
+    try {
+      setIsActioning(true);
+      await loansApi.alertBorrower(loan.id);
+      alert("Overdue alert sent to borrower");
+    } catch (err) {
+      alert("Failed to send alert. Please try again.");
+      console.error(err);
+    } finally {
+      setIsActioning(false);
+    }
+  };
+
+  // Auto-debit handlers
+  const handleEnableAutoDebit = async (loanId: string) => {
+    try {
+      setIsLoadingAutoDebit(true);
+      const response = await fetch(`/api/auto-debit/${loanId}/enable`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (!response.ok) throw new Error("Failed to enable auto-debit");
+
+      const data = await response.json();
+      setAutoDebitStatus(data);
+      refetch();
+      alert("Auto-debit enabled successfully");
+    } catch (err) {
+      throw err instanceof Error ? err : new Error("Failed to enable auto-debit");
+    } finally {
+      setIsLoadingAutoDebit(false);
+    }
+  };
+
+  const handleDisableAutoDebit = async (loanId: string) => {
+    try {
+      setIsLoadingAutoDebit(true);
+      const response = await fetch(`/api/auto-debit/${loanId}/disable`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (!response.ok) throw new Error("Failed to disable auto-debit");
+
+      setAutoDebitStatus(null);
+      refetch();
+      alert("Auto-debit disabled successfully");
+    } catch (err) {
+      throw err instanceof Error ? err : new Error("Failed to disable auto-debit");
+    } finally {
+      setIsLoadingAutoDebit(false);
+    }
+  };
+
   const handleLogPayment = (item: RepaymentScheduleItem | null) => {
     setSelectedScheduleItem(item);
-    setPaymentMode('log');
+    setPaymentMode("log");
     setIsPaymentModalOpen(true);
   };
 
-  const handleMakePayment = (item: RepaymentScheduleItem | null) => {
-    setSelectedScheduleItem(item);
-    setPaymentMode('pay');
+  const getFirstUnpaidSchedule = () => {
+    return loan.schedule?.find((s) => !s.isPaid) || loan.schedule?.[0] || null;
+  };
+
+  const handleMakePayment = () => {
+    const firstUnpaid = getFirstUnpaidSchedule();
+    setSelectedScheduleItem(firstUnpaid);
+    setPaymentMode("pay");
     setIsPaymentModalOpen(true);
   };
 
-  const handleInitiateAutoDebit = (item: RepaymentScheduleItem | null) => {
-    setSelectedScheduleItem(item);
-    setPaymentMode('auto-debit');
+  const handleInitiateAutoDebit = () => {
+    const firstUnpaid = getFirstUnpaidSchedule();
+    setSelectedScheduleItem(firstUnpaid);
+    setPaymentMode("auto-debit");
     setIsPaymentModalOpen(true);
   };
 
   const handlePaymentSubmit = async (data: LogPaymentFormData) => {
     try {
       setIsActioning(true);
-      if (paymentMode === 'pay') {
+      if (paymentMode === "pay") {
         await paymentsApi.makePayment(loan.id, data);
-      } else if (paymentMode === 'auto-debit') {
+      } else if (paymentMode === "auto-debit") {
         await paymentsApi.initiateAutoDebit(loan.id, data);
       } else {
         await paymentsApi.logPayment(loan.id, data);
@@ -137,10 +242,10 @@ const canAcceptDecline = isBorrower && loan.status === 'pending_acceptance';
   };
 
   // Check for overdue schedules (used for future features)
-  const _overdueSchedules = loan.schedule?.filter(
-    (s) => !s.isPaid && getDaysOverdue(s.dueDate) > 0
-  ) || [];
-  void _overdueSchedules;
+  const overdueSchedules =
+    loan.schedule?.filter((s) => !s.isPaid && getDaysOverdue(s.dueDate) > 0) ||
+    [];
+  const hasOverdue = overdueSchedules.length > 0;
 
   return (
     <div className="space-y-6">
@@ -158,17 +263,20 @@ const canAcceptDecline = isBorrower && loan.status === 'pending_acceptance';
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-4">
-              <Avatar name={otherParty?.name || 'Unknown'} size="lg" />
+              <Avatar name={otherParty?.name || "Unknown"} size="lg" />
               <div>
                 <h1 className="text-xl font-bold text-gray-900">
-                  {otherParty?.name || 'Unknown User'}
+                  {otherParty?.name || "Unknown User"}
                 </h1>
                 <p className="text-gray-500">
-                  {isLender ? 'Borrower' : 'Lender'}
+                  {isLender ? "Borrower" : "Lender"}
                 </p>
               </div>
             </div>
-            <Badge variant={getStatusBadgeVariant(loan.status)} className="text-sm py-1 px-3">
+            <Badge
+              variant={getStatusBadgeVariant(loan.status)}
+              className="text-sm py-1 px-3"
+            >
               {formatStatus(loan.status)}
             </Badge>
           </div>
@@ -199,7 +307,7 @@ const canAcceptDecline = isBorrower && loan.status === 'pending_acceptance';
                 <span>Start Date</span>
               </div>
               <p className="text-xl font-bold text-gray-900">
-                {formatDate(loan.startDate, 'MMM dd')}
+                {formatDate(loan.startDate, "MMM dd")}
               </p>
             </div>
             <div>
@@ -215,28 +323,12 @@ const canAcceptDecline = isBorrower && loan.status === 'pending_acceptance';
 
           {/* Progress */}
           <div className="mt-6 pt-6 border-t border-gray-200">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-700">
-                Payment Progress
-              </span>
-              <span className="text-sm text-gray-500">
-                {formatCurrency(loan.totalPaid)} / {formatCurrency(loan.totalAmount)}
-              </span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-3">
-              <div
-                className="bg-blue-600 h-3 rounded-full transition-all"
-                style={{ width: `${loan.percentPaid}%` }}
-              />
-            </div>
-            <div className="flex items-center justify-between mt-2">
-              <span className="text-xs text-gray-500">
-                {loan.percentPaid.toFixed(1)}% completed
-              </span>
-              <span className="text-xs font-medium text-gray-700">
-                {formatCurrency(loan.remaining)} remaining
-              </span>
-            </div>
+            <PaymentProgress
+              installments={loan.installments}
+              paidInstallments={loan.schedule?.filter((s) => s.isPaid).length || 0}
+              frequency={loan.frequency}
+              status={loan.status}
+            />
           </div>
         </CardContent>
 
@@ -258,21 +350,32 @@ const canAcceptDecline = isBorrower && loan.status === 'pending_acceptance';
           </CardFooter>
         )}
 
+        {canCancelLoan && (
+          <CardFooter className="flex justify-end gap-3">
+            <Button
+              variant="outline"
+              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              onClick={handleCancelLoan}
+              disabled={isActioning}
+            >
+              <XCircle className="w-4 h-4 mr-2" />
+              Cancel Loan Request
+            </Button>
+          </CardFooter>
+        )}
+
         {/* Payment Actions */}
         {(canMakePayment || canInitiateAutoDebit) && (
           <CardFooter className="flex justify-end gap-3 border-t border-gray-200">
             {canMakePayment && (
-              <Button
-                onClick={() => handleMakePayment(loan.schedule?.[0] || null)}
-                disabled={isActioning}
-              >
+              <Button onClick={handleMakePayment} disabled={isActioning}>
                 Pay Now
               </Button>
             )}
             {canInitiateAutoDebit && (
               <Button
                 variant="secondary"
-                onClick={() => handleInitiateAutoDebit(loan.schedule?.[0] || null)}
+                onClick={handleInitiateAutoDebit}
                 disabled={isActioning}
               >
                 Initiate Auto-Debit
@@ -285,6 +388,16 @@ const canAcceptDecline = isBorrower && loan.status === 'pending_acceptance';
                 disabled={isActioning}
               >
                 Log Manual Payment
+              </Button>
+            )}
+            {isLender && hasOverdue && (
+              <Button
+                variant="outline"
+                className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                onClick={handleAlertBorrower}
+                disabled={isActioning}
+              >
+                Alert Borrower
               </Button>
             )}
           </CardFooter>
@@ -348,18 +461,22 @@ const canAcceptDecline = isBorrower && loan.status === 'pending_acceptance';
                           {formatCurrency(payment.amount)}
                         </p>
                         <p className="text-xs text-gray-600 mt-1">
-                          {payment.type === 'manual' ? '💳 Manual Payment' : '🔄 Auto-Debit'}
+                          {payment.type === "manual"
+                            ? "💳 Manual Payment"
+                            : "🔄 Auto-Debit"}
                         </p>
                         {payment.note && (
-                          <p className="text-xs text-gray-500 mt-1">{payment.note}</p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {payment.note}
+                          </p>
                         )}
                       </div>
                       <div className="text-right">
                         <p className="text-sm text-gray-700">
-                          {formatDate(payment.paymentDate, 'MMM dd, yyyy')}
+                          {formatDate(payment.paymentDate, "MMM dd, yyyy")}
                         </p>
                         <p className="text-xs text-gray-500 mt-1">
-                          Paid by {isLender ? 'borrower' : 'you'}
+                          Paid by {isLender ? "borrower" : "you"}
                         </p>
                       </div>
                     </div>
@@ -372,10 +489,32 @@ const canAcceptDecline = isBorrower && loan.status === 'pending_acceptance';
               )}
             </CardContent>
           </Card>
+
+          {/* Fee Breakdown */}
+          {loan.principal && loan.interestRate && loan.totalAmount && (
+            <FeeBreakdown
+              principal={loan.principal}
+              interest={(loan.principal * loan.interestRate * loan.installments) / 100}
+              totalAmount={loan.totalAmount}
+              showFeeInfo={true}
+            />
+          )}
         </div>
 
         {/* Sidebar */}
         <div className="space-y-6">
+          {/* Auto-Debit Toggle */}
+          {["active", "overdue"].includes(loan.status) && (
+            <AutoDebitToggle
+              loanId={loan.id}
+              isEnabled={loan.autoDebit || false}
+              autoDebitStatus={autoDebitStatus}
+              onEnable={handleEnableAutoDebit}
+              onDisable={handleDisableAutoDebit}
+              isLoading={isLoadingAutoDebit}
+            />
+          )}
+
           {/* Loan Details */}
           <Card>
             <CardHeader>
@@ -384,16 +523,24 @@ const canAcceptDecline = isBorrower && loan.status === 'pending_acceptance';
             <CardContent className="space-y-3 text-sm">
               <div className="flex justify-between">
                 <span className="text-gray-500">Loan ID</span>
-                <span className="font-mono text-gray-700">{loan.id.slice(0, 8)}...</span>
+                <span className="font-mono text-gray-700">
+                  {loan.id.slice(0, 8)}...
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Created</span>
-                <span className="text-gray-700">{formatDate(loan.createdAt)}</span>
+                <span className="text-gray-700">
+                  {formatDate(loan.createdAt)}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Auto-Debit</span>
-                <span className={loan.autoDebit ? 'text-green-600' : 'text-gray-500'}>
-                  {loan.autoDebit ? 'Enabled' : 'Disabled'}
+                <span
+                  className={
+                    loan.autoDebit ? "text-green-600" : "text-gray-500"
+                  }
+                >
+                  {loan.autoDebit ? "Enabled" : "Disabled"}
                 </span>
               </div>
               {loan.isQuickLend && (
@@ -404,6 +551,35 @@ const canAcceptDecline = isBorrower && loan.status === 'pending_acceptance';
               )}
             </CardContent>
           </Card>
+          {/* Report Loan */}
+          {(isLender || isBorrower) && ["active", "overdue", "completed"].includes(loan.status) && (
+            <Card className={loan.flagged ? 'border-red-200 bg-red-50/50' : ''}>
+              <CardContent className="p-4">
+                {loan.flagged ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-red-700">
+                      <Flag className="w-4 h-4" />
+                      <span className="font-semibold text-sm">Loan Reported</span>
+                    </div>
+                    {loan.flagReason && (
+                      <p className="text-xs text-red-600 bg-red-100 p-2 rounded-lg">
+                        &ldquo;{loan.flagReason}&rdquo;
+                      </p>
+                    )}
+                    <p className="text-[10px] text-red-400">Admin has been notified</p>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setIsReportModalOpen(true)}
+                    className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm font-medium text-orange-700 bg-orange-50 hover:bg-orange-100 border border-orange-200 transition-colors"
+                  >
+                    <AlertTriangle className="w-4 h-4" />
+                    Report Issue
+                  </button>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
 
@@ -416,6 +592,68 @@ const canAcceptDecline = isBorrower && loan.status === 'pending_acceptance';
         onSubmit={handlePaymentSubmit}
         mode={paymentMode}
       />
+
+      {/* Report Loan Modal */}
+      <Modal isOpen={isReportModalOpen} onClose={() => setIsReportModalOpen(false)}>
+        <ModalHeader onClose={() => setIsReportModalOpen(false)}>
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5 text-orange-500" />
+            Report Loan Issue
+          </div>
+        </ModalHeader>
+        <ModalContent className="space-y-4">
+          <p className="text-sm text-gray-600">
+            Report a concern or issue with this loan. An admin will review the report.
+          </p>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Describe the issue
+            </label>
+            <textarea
+              value={reportReason}
+              onChange={(e) => setReportReason(e.target.value)}
+              maxLength={500}
+              rows={4}
+              placeholder="e.g., Incorrect amount, suspicious activity, payment dispute..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-sm resize-none"
+            />
+            <p className="text-xs text-gray-400 mt-1">{reportReason.length}/500</p>
+          </div>
+        </ModalContent>
+        <ModalFooter>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setIsReportModalOpen(false);
+              setReportReason("");
+            }}
+            disabled={isReporting}
+          >
+            Cancel
+          </Button>
+          <Button
+            className="bg-orange-600 hover:bg-orange-700"
+            onClick={async () => {
+              if (!reportReason.trim()) return;
+              try {
+                setIsReporting(true);
+                await loansApi.report(loan.id, reportReason.trim());
+                setIsReportModalOpen(false);
+                setReportReason("");
+                refetch();
+              } catch (err) {
+                console.error(err);
+              } finally {
+                setIsReporting(false);
+              }
+            }}
+            isLoading={isReporting}
+            disabled={!reportReason.trim() || isReporting}
+          >
+            Submit Report
+          </Button>
+        </ModalFooter>
+      </Modal>
     </div>
   );
 }

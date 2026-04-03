@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { RepaymentScheduleItem } from '@/types';
@@ -50,6 +50,8 @@ export function LogPaymentModal({
     register,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<LogPaymentFormData>({
     resolver: zodResolver(logPaymentSchema),
@@ -60,6 +62,16 @@ export function LogPaymentModal({
       scheduleId: scheduleItem?.id,
     },
   });
+
+  // Update form values when scheduleItem changes (when modal opens/changes)
+  useEffect(() => {
+    if (scheduleItem) {
+      setValue('amount', scheduleItem.amountDue);
+      setValue('scheduleId', scheduleItem.id);
+    }
+  }, [scheduleItem, setValue]);
+
+  const watchAmount = watch('amount');
 
   const handleFormSubmit = async (data: LogPaymentFormData) => {
     if (data.amount > maxAmount) {
@@ -85,16 +97,30 @@ export function LogPaymentModal({
       <form onSubmit={handleSubmit(handleFormSubmit)}>
         <ModalContent>
           {scheduleItem && (
-            <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-600">
-                Installment #{scheduleItem.installmentNo}
-              </p>
-              <p className="text-sm text-gray-600">
+            <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-semibold text-blue-900">
+                  Installment: Week {scheduleItem.installmentNo}
+                </p>
+                <span className={`text-xs px-2 py-1 rounded ${
+                  scheduleItem.isPaid
+                    ? 'bg-green-100 text-green-700'
+                    : 'bg-yellow-100 text-yellow-700'
+                }`}>
+                  {scheduleItem.isPaid ? 'Paid' : 'Pending'}
+                </span>
+              </div>
+              <p className="text-sm text-blue-700 mb-1">
                 Due: {formatDate(scheduleItem.dueDate)}
               </p>
               <p className="font-medium text-gray-900">
                 Amount Due: {formatCurrency(scheduleItem.amountDue)}
               </p>
+              {mode === 'pay' && (
+                <p className="text-xs text-blue-600 mt-2">
+                  ℹ️ This payment will be deducted from your wallet
+                </p>
+              )}
             </div>
           )}
 
@@ -121,7 +147,7 @@ export function LogPaymentModal({
 
             <Input
               label="Note (optional)"
-              placeholder={mode === 'pay' ? 'e.g., Wing transfer ref' : 'e.g., Wing transfer ref #123'}
+              placeholder={mode === 'pay' ? 'e.g., Transaction reference' : 'e.g., Transaction reference #123'}
               error={errors.note?.message}
               {...register('note')}
             />

@@ -24,7 +24,7 @@ function ProtectedContent({ children }: { children: React.ReactNode }) {
   const totalOverdue = schedules.reduce((sum, s) => sum + s.amountDue, 0);
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col mesh-bg">
       <Navbar />
       {overdueCount > 0 && (
         <OverdueBanner overdueCount={overdueCount} totalOverdueAmount={totalOverdue} />

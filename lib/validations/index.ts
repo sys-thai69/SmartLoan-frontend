@@ -98,6 +98,7 @@ export const transferSchema = z.object({
 
 export const createTemplateSchema = z.object({
   templateName: z.string().min(1, 'Template name is required'),
+  amount: z.number().min(0.01, 'Amount must be at least $0.01'),
   interestRate: z.number().min(0, 'Interest rate cannot be negative'),
   frequency: z.enum(['weekly', 'monthly']),
   installments: z.number().int().min(1, 'At least 1 installment required'),
@@ -132,6 +133,15 @@ export const changePasswordSchema = z
     path: ['confirmNewPassword'],
   });
 
+export const updateProfileSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  phoneNumber: z
+    .string()
+    .regex(/^\+?[1-9]\d{7,14}$/, 'Please enter a valid phone number')
+    .or(z.literal('')),
+  profilePicture: z.string().optional(),
+});
+
 // ===========================================
 // Export Types
 // ===========================================
@@ -147,3 +157,4 @@ export type CreateTemplateFormData = z.infer<typeof createTemplateSchema>;
 export type ParseLoanFormData = z.infer<typeof parseLoanSchema>;
 export type DraftMessageFormData = z.infer<typeof draftMessageSchema>;
 export type ChangePasswordFormData = z.infer<typeof changePasswordSchema>;
+export type UpdateProfileFormData = z.infer<typeof updateProfileSchema>;

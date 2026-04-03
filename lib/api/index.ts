@@ -19,7 +19,9 @@ import type {
   ParseLoanResponse,
   PlatformStats,
   UserWithStats,
+  AdminUserDetail,
   RepaymentScheduleItem,
+  Notification,
 } from '@/types';
 
 // ===========================================
@@ -44,6 +46,11 @@ export const authApi = {
 
   logout: async (): Promise<void> => {
     await apiClient.post('/auth/logout');
+  },
+
+  updateProfile: async (data: Partial<User>): Promise<User> => {
+    const response = await apiClient.put<User>('/users/profile', data);
+    return response.data;
   },
 };
 
@@ -98,6 +105,11 @@ export const loansApi = {
     return response.data;
   },
 
+  cancel: async (id: string): Promise<Loan> => {
+    const response = await apiClient.patch<Loan>(`/loans/${id}/cancel`);
+    return response.data;
+  },
+
   updateStatus: async (id: string, status: string): Promise<Loan> => {
     const response = await apiClient.patch<Loan>(`/loans/${id}/status`, { status });
     return response.data;
@@ -105,6 +117,26 @@ export const loansApi = {
 
   getOverdue: async (): Promise<RepaymentScheduleItem[]> => {
     const response = await apiClient.get<RepaymentScheduleItem[]>('/loans/overdue');
+    return response.data;
+  },
+
+  alertBorrower: async (id: string): Promise<void> => {
+    await apiClient.post(`/loans/${id}/alert-borrower`, {});
+  },
+
+  sendDueReminder: async (id: string, scheduleId: string, customMessage?: string): Promise<void> => {
+    await apiClient.post(`/loans/${id}/send-due-reminder`, {
+      scheduleId,
+      customMessage,
+    });
+  },
+
+  sendOverdueAlert: async (id: string): Promise<void> => {
+    await apiClient.post(`/loans/${id}/send-overdue-alert`, {});
+  },
+
+  report: async (id: string, reason: string): Promise<Loan> => {
+    const response = await apiClient.post<Loan>(`/loans/${id}/report`, { reason });
     return response.data;
   },
 };
@@ -136,6 +168,35 @@ export const paymentsApi = {
 
   deletePayment: async (loanId: string, paymentId: string): Promise<void> => {
     await apiClient.delete(`/loans/${loanId}/payments/${paymentId}`);
+  },
+};
+
+// ===========================================
+// Notifications API
+// ===========================================
+
+export const notificationsApi = {
+  getAll: async (): Promise<Notification[]> => {
+    const response = await apiClient.get<Notification[]>('/notifications');
+    return response.data;
+  },
+
+  getUnread: async (): Promise<Notification[]> => {
+    const response = await apiClient.get<Notification[]>('/notifications/unread');
+    return response.data;
+  },
+
+  getUnreadCount: async (): Promise<{ count: number }> => {
+    const response = await apiClient.get<{ count: number }>('/notifications/unread-count');
+    return response.data;
+  },
+
+  markAsRead: async (id: string): Promise<void> => {
+    await apiClient.put(`/notifications/${id}/read`);
+  },
+
+  markAllAsRead: async (): Promise<void> => {
+    await apiClient.put('/notifications/read-all');
   },
 };
 
@@ -211,8 +272,34 @@ export const adminApi = {
     return response.data;
   },
 
+  getUserDetail: async (id: string): Promise<AdminUserDetail> => {
+    const response = await apiClient.get<AdminUserDetail>(`/admin/users/${id}`);
+    return response.data;
+  },
+
+  getAllLoans: async (): Promise<Loan[]> => {
+    const response = await apiClient.get<Loan[]>('/admin/loans');
+    return response.data;
+  },
+
   flagLoan: async (id: string): Promise<Loan> => {
     const response = await apiClient.patch<Loan>(`/admin/loans/${id}/flag`);
     return response.data;
   },
+
+  unflagLoan: async (id: string): Promise<Loan> => {
+    const response = await apiClient.patch<Loan>(`/admin/loans/${id}/unflag`);
+    return response.data;
+  },
+
+  setUserRole: async (userId: string, role: 'user' | 'admin'): Promise<UserWithStats> => {
+    const response = await apiClient.patch<UserWithStats>(`/admin/users/${userId}/role`, { role });
+    return response.data;
+  },
+
+  bootstrap: async (key: string): Promise<{ message: string }> => {
+    const response = await apiClient.post<{ message: string }>('/admin/bootstrap', { key });
+    return response.data;
+  },
 };
+

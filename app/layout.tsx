@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { ErrorProvider } from "@/context/ErrorContext";
@@ -13,8 +14,8 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "SmartLoan - Peer-to-Peer Loan Tracker",
-  description: "Digitalize informal cash lending between friends, family, and colleagues. Built for Wing Bank Cambodia.",
-  keywords: ["loan", "peer-to-peer", "wing bank", "cambodia", "fintech"],
+  description: "Digitalize informal cash lending between friends, family, and colleagues.",
+  keywords: ["loan", "peer-to-peer", "cambodia", "fintech"],
 };
 
 export default function RootLayout({
@@ -25,14 +26,16 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} h-full`}>
       <body className="min-h-full flex flex-col font-sans antialiased bg-gray-50">
-        <ErrorProvider>
-          <AuthProvider>
-            <ErrorBoundary>
-              {children}
-              <ErrorNotification />
-            </ErrorBoundary>
-          </AuthProvider>
-        </ErrorProvider>
+        <ClerkProvider>
+          <ErrorProvider>
+            <AuthProvider>
+              <ErrorBoundary>
+                {children}
+                <ErrorNotification />
+              </ErrorBoundary>
+            </AuthProvider>
+          </ErrorProvider>
+        </ClerkProvider>
       </body>
     </html>
   );

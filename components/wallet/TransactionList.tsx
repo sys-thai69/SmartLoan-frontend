@@ -3,7 +3,7 @@
 import type { WalletTransaction } from '@/types';
 import { Badge, EmptyState } from '@/components/ui';
 import { formatCurrency, formatDate, formatRelativeTime } from '@/lib/utils';
-import { ArrowUpRight, ArrowDownLeft, Plus, RefreshCw, Receipt } from 'lucide-react';
+import { ArrowUpRight, ArrowDownLeft, Plus, RefreshCw, Receipt, Lock } from 'lucide-react';
 
 interface TransactionListProps {
   transactions: WalletTransaction[];
@@ -31,8 +31,8 @@ export function TransactionList({ transactions, currency = 'USD' }: TransactionL
         );
       case 'transfer':
         return (
-          <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
-            <ArrowUpRight className="w-5 h-5 text-gray-600" />
+          <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+            <ArrowUpRight className="w-5 h-5 text-blue-600" />
           </div>
         );
       case 'auto_debit':
@@ -45,6 +45,12 @@ export function TransactionList({ transactions, currency = 'USD' }: TransactionL
         return (
           <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
             <RefreshCw className="w-5 h-5 text-purple-600" />
+          </div>
+        );
+      case 'reserved':
+        return (
+          <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
+            <Lock className="w-5 h-5 text-gray-500" />
           </div>
         );
       default:
@@ -62,8 +68,21 @@ export function TransactionList({ transactions, currency = 'USD' }: TransactionL
       transfer: 'Transfer',
       auto_debit: 'Auto Debit Payment',
       refund: 'Refund',
+      reserved: 'Reserved',
     };
     return labels[type] || type;
+  };
+
+  const getTransactionColor = (type: string) => {
+    switch (type) {
+      case 'topup':
+      case 'refund':
+        return 'text-green-600';
+      case 'reserved':
+        return 'text-gray-500';
+      default:
+        return 'text-gray-900';
+    }
   };
 
   const isCredit = (type: string) => type === 'topup' || type === 'refund';
@@ -111,10 +130,14 @@ export function TransactionList({ transactions, currency = 'USD' }: TransactionL
                 <div className="text-right">
                   <p
                     className={`text-lg font-semibold ${
-                      isCredit(tx.type) ? 'text-green-600' : 'text-gray-900'
+                      tx.type === 'reserved'
+                        ? 'text-gray-500'
+                        : isCredit(tx.type)
+                        ? 'text-green-600'
+                        : 'text-gray-900'
                     }`}
                   >
-                    {isCredit(tx.type) ? '+' : '-'}
+                    {tx.type === 'reserved' ? '−' : isCredit(tx.type) ? '+' : '−'}
                     {formatCurrency(tx.amount, currency)}
                   </p>
                   <Badge
@@ -125,10 +148,12 @@ export function TransactionList({ transactions, currency = 'USD' }: TransactionL
                         ? 'info'
                         : tx.type === 'refund'
                         ? 'success'
+                        : tx.type === 'reserved'
+                        ? 'default'
                         : 'default'
                     }
                   >
-                    {tx.type.replace('_', ' ')}
+                    {tx.type === 'reserved' ? 'reserved' : tx.type.replace('_', ' ')}
                   </Badge>
                 </div>
               </div>

@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { parseNaturalLanguageLoan, getSuggestions, type ParsedLoanData } from '@/lib/nlParser';
+import { aiApi } from '@/lib/api';
 import { Card, CardContent, Button, Badge } from '@/components/ui';
 import { formatCurrency } from '@/lib/utils';
-import { Sparkles, Check, AlertCircle, ArrowRight, X } from 'lucide-react';
+import { Sparkles, Check, AlertCircle, ArrowRight, X, Loader2 } from 'lucide-react';
 
 interface NLLoanInputProps {
   onParsed: (data: ParsedLoanData) => void;
@@ -14,6 +15,8 @@ interface NLLoanInputProps {
 export function NLLoanInput({ onParsed, onConfirm }: NLLoanInputProps) {
   const [input, setInput] = useState('');
   const [parsed, setParsed] = useState<ParsedLoanData | null>(null);
+  const [resolvedEmail, setResolvedEmail] = useState<string | null>(null);
+  const [isResolving, setIsResolving] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [debouncedInput, setDebouncedInput] = useState('');
 
@@ -39,10 +42,36 @@ export function NLLoanInput({ onParsed, onConfirm }: NLLoanInputProps) {
     const result = !debouncedInput.trim() ? null : parseNaturalLanguageLoan(debouncedInput);
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setParsed(result);
+    setResolvedEmail(null); // Reset resolved email when input changes
     if (result) {
       onParsed(result);
+
+      // If we have a name but no email, try to resolve via backend
+      if (result.borrowerName && !result.borrowerEmail) {
+        resolveEmailFromBackend(debouncedInput, result);
+      }
     }
   }, [debouncedInput, onParsed]);
+
+  // Call backend to resolve borrower name → email
+  const resolveEmailFromBackend = async (text: string, localParsed: ParsedLoanData) => {
+    setIsResolving(true);
+    try {
+      const response = await aiApi.parseLoan({ text });
+      if (response.borrowerEmail) {
+        setResolvedEmail(response.borrowerEmail);
+        // Update parsed data with resolved email
+        const updatedParsed = { ...localParsed, borrowerEmail: response.borrowerEmail };
+        setParsed(updatedParsed);
+        onParsed(updatedParsed);
+      }
+    } catch (err) {
+      // Backend resolution failed, user can still enter email manually
+      console.warn('Backend borrower resolution failed:', err);
+    } finally {
+      setIsResolving(false);
+    }
+  };
 
   // Compute isTyping based on whether input differs from debouncedInput
   const isTyping = input !== debouncedInput && input.trim() !== '';
@@ -50,6 +79,7 @@ export function NLLoanInput({ onParsed, onConfirm }: NLLoanInputProps) {
   const handleClear = () => {
     setInput('');
     setParsed(null);
+    setResolvedEmail(null);
   };
 
   const handleConfirm = () => {
@@ -60,11 +90,12 @@ export function NLLoanInput({ onParsed, onConfirm }: NLLoanInputProps) {
 
   const suggestions = parsed ? getSuggestions(parsed) : [];
   const isValid = parsed && parsed.amount && (parsed.borrowerName || parsed.borrowerEmail);
+  const hasResolvedBorrower = parsed && (parsed.borrowerEmail || resolvedEmail);
 
   const exampleInputs = [
     "lend Channy $50, pay back in 2 weeks",
     "give John $100 monthly for 3 months, no interest",
-    "loan sarah@email.com $200, 4 weekly payments, 5% interest",
+    "lend +855912345678 $200, 4 weekly payments",
   ];
 
   return (
@@ -110,10 +141,10 @@ export function NLLoanInput({ onParsed, onConfirm }: NLLoanInputProps) {
       )}
 
       {/* Parsing indicator */}
-      {isTyping && (
+      {(isTyping || isResolving) && (
         <div className="flex items-center gap-2 text-purple-600 text-sm">
           <div className="w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
-          <span>Understanding your loan...</span>
+          <span>{isResolving ? 'Looking up borrower...' : 'Understanding your loan...'}</span>
         </div>
       )}
 
@@ -147,8 +178,11 @@ export function NLLoanInput({ onParsed, onConfirm }: NLLoanInputProps) {
               />
               <ParsedField
                 label="Borrower"
-                value={parsed.borrowerName || parsed.borrowerEmail}
+                value={parsed.borrowerEmail
+                  ? `${parsed.borrowerName || ''} (${parsed.borrowerEmail})`
+                  : parsed.borrowerName || parsed.borrowerEmail}
                 isSet={!!(parsed.borrowerName || parsed.borrowerEmail)}
+                subtitle={isResolving ? 'Resolving...' : (parsed.borrowerName && !parsed.borrowerEmail ? '⚠ Email not found in system' : undefined)}
               />
               <ParsedField
                 label="Schedule"
@@ -164,8 +198,20 @@ export function NLLoanInput({ onParsed, onConfirm }: NLLoanInputProps) {
               />
             </div>
 
+            {/* Warning if borrower name found but no email resolved */}
+            {parsed.borrowerName && !parsed.borrowerEmail && !isResolving && (
+              <div className="mb-4 p-3 bg-orange-100 rounded-lg border border-orange-200">
+                <p className="text-xs font-medium text-orange-800">
+                  ⚠ User &quot;{parsed.borrowerName}&quot; not found in the system.
+                </p>
+                <p className="text-xs text-orange-700 mt-1">
+                  Click &quot;Create This Loan&quot; to enter their email manually, or make sure they have an account.
+                </p>
+              </div>
+            )}
+
             {/* Suggestions */}
-            {suggestions.length > 0 && (
+            {suggestions.length > 0 && !parsed.borrowerName && (
               <div className="mb-4 p-3 bg-yellow-100 rounded-lg">
                 <p className="text-xs font-medium text-yellow-800 mb-1">Add to your description:</p>
                 <ul className="text-xs text-yellow-700 space-y-1">
@@ -178,9 +224,18 @@ export function NLLoanInput({ onParsed, onConfirm }: NLLoanInputProps) {
 
             {/* Confirm Button */}
             {isValid && (
-              <Button onClick={handleConfirm} className="w-full">
-                Create This Loan
-                <ArrowRight className="w-4 h-4 ml-2" />
+              <Button onClick={handleConfirm} className="w-full" disabled={isResolving}>
+                {isResolving ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Resolving borrower...
+                  </>
+                ) : (
+                  <>
+                    Create This Loan
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </>
+                )}
               </Button>
             )}
           </CardContent>
@@ -194,11 +249,13 @@ export function NLLoanInput({ onParsed, onConfirm }: NLLoanInputProps) {
 function ParsedField({
   label,
   value,
-  isSet
+  isSet,
+  subtitle,
 }: {
   label: string;
   value: string | undefined;
   isSet: boolean;
+  subtitle?: string;
 }) {
   return (
     <div className={`p-2 rounded-lg ${isSet ? 'bg-white' : 'bg-gray-100 border border-dashed border-gray-300'}`}>
@@ -206,6 +263,9 @@ function ParsedField({
       <p className={`font-medium ${isSet ? 'text-gray-900' : 'text-gray-400'}`}>
         {value || 'Not set'}
       </p>
+      {subtitle && (
+        <p className="text-[10px] text-orange-600 mt-0.5">{subtitle}</p>
+      )}
     </div>
   );
 }

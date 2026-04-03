@@ -1,0 +1,17 @@
+<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="24" cy="24" r="24" fill="#4F46E5"/>
+
+  <!-- Loan symbol - stacked coins/money -->
+  <g transform="translate(12, 10)">
+    <!-- Top circle -->
+    <circle cx="12" cy="8" r="6" fill="white" opacity="0.9"/>
+    <text x="12" y="11" font-size="8" font-weight="bold" fill="#4F46E5" text-anchor="middle">$</text>
+
+    <!-- Middle circle -->
+    <circle cx="8" cy="14" r="5.5" fill="white" opacity="0.8"/>
+
+    <!-- Bottom circle -->
+    <circle cx="16" cy="14" r="5.5" fill="white" opacity="0.8"/>
+  </g>
+</svg>

@@ -5,6 +5,7 @@
 export interface ParsedLoanData {
   borrowerName?: string;
   borrowerEmail?: string;
+  borrowerPhone?: string;
   amount?: number;
   currency: string;
   installments?: number;
@@ -36,6 +37,11 @@ const NAME_PATTERNS = [
 
 const EMAIL_PATTERNS = [
   /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i,     // email@example.com
+];
+
+const PHONE_PATTERNS = [
+  /\+(\d{1,3})\s?(\d{3,14})/,                                // +855912345678
+  /\(?(\d{3})\)?[\s.-]?(\d{3})[\s.-]?(\d{4})/,             // (123) 456-7890
 ];
 
 const DURATION_PATTERNS = [
@@ -103,6 +109,18 @@ export function parseNaturalLanguageLoan(input: string): ParsedLoanData {
   if (emailMatch) {
     borrowerEmail = emailMatch[1];
     if (!borrowerName) matchedFields++; // Count as borrower field if no name
+  }
+
+  // Parse phone number
+  let borrowerPhone: string | undefined;
+  for (const pattern of PHONE_PATTERNS) {
+    const match = trimmedInput.match(pattern);
+    if (match) {
+      // Extract digits only
+      borrowerPhone = match[0].replace(/\D/g, '');
+      if (!borrowerName && !borrowerEmail) matchedFields++; // Count as borrower field
+      break;
+    }
   }
 
   // Parse duration and convert to installments/frequency
@@ -181,7 +199,7 @@ export function parseNaturalLanguageLoan(input: string): ParsedLoanData {
   confidence = matchedFields / totalFields;
 
   // Boost confidence if we have the essential fields (amount + borrower)
-  if (amount && (borrowerName || borrowerEmail)) {
+  if (amount && (borrowerName || borrowerEmail || borrowerPhone)) {
     confidence = Math.min(1, confidence + 0.2);
   }
 
@@ -192,6 +210,7 @@ export function parseNaturalLanguageLoan(input: string): ParsedLoanData {
   return {
     borrowerName,
     borrowerEmail,
+    borrowerPhone,
     amount,
     currency: 'USD',
     installments,
@@ -211,8 +230,8 @@ export function formatParsedLoan(parsed: ParsedLoanData): string {
     parts.push(`$${parsed.amount.toFixed(2)}`);
   }
 
-  if (parsed.borrowerName || parsed.borrowerEmail) {
-    parts.push(`to ${parsed.borrowerName || parsed.borrowerEmail}`);
+  if (parsed.borrowerName || parsed.borrowerEmail || parsed.borrowerPhone) {
+    parts.push(`to ${parsed.borrowerName || parsed.borrowerEmail || parsed.borrowerPhone}`);
   }
 
   if (parsed.installments && parsed.frequency) {
@@ -232,8 +251,8 @@ export function getSuggestions(parsed: ParsedLoanData): string[] {
     suggestions.push('Add an amount (e.g., "$50" or "50 dollars")');
   }
 
-  if (!parsed.borrowerName && !parsed.borrowerEmail) {
-    suggestions.push('Add borrower name or email (e.g., "to Channy" or "channy@email.com")');
+  if (!parsed.borrowerName && !parsed.borrowerEmail && !parsed.borrowerPhone) {
+    suggestions.push('Add borrower name, email, or phone (e.g., "to Channy", "channy@email.com", or "+855912345678")');
   }
 
   if (!parsed.duration) {

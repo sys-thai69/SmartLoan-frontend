@@ -9,6 +9,7 @@ export interface User {
   name: string;
   email: string;
   phoneNumber?: string;
+  profilePicture?: string;
   role: UserRole;
   trustScore: number;
   emailVerified?: boolean;
@@ -42,7 +43,8 @@ export type LoanStatus =
   | 'active'
   | 'overdue'
   | 'completed'
-  | 'declined';
+  | 'declined'
+  | 'cancelled';
 
 export type LoanFrequency = 'weekly' | 'monthly';
 
@@ -65,6 +67,10 @@ export interface Loan {
   createdAt: string;
   schedule?: RepaymentScheduleItem[];
   payments?: Payment[];
+  flagged?: boolean;
+  flagReason?: string;
+  flaggedBy?: string;
+  flaggedAt?: string;
 }
 
 export interface LoanWithBalance extends Loan {
@@ -130,10 +136,36 @@ export interface LogPaymentData {
 }
 
 // ===========================================
+// Notification Types
+// ===========================================
+
+export type NotificationType =
+  | 'INFO'
+  | 'WARNING'
+  | 'ALERT'
+  | 'PAYMENT_REMINDER'
+  | 'LOAN_REQUEST'
+  | 'LOAN_ACCEPTED'
+  | 'LOAN_DECLINED'
+  | 'PAYMENT_RECEIVED'
+  | 'OVERDUE_ALERT';
+
+export interface Notification {
+  id: string;
+  userId: string;
+  title: string;
+  message: string;
+  type: NotificationType;
+  loanId?: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
+// ===========================================
 // Wallet Types
 // ===========================================
 
-export type TransactionType = 'topup' | 'transfer' | 'auto_debit' | 'refund';
+export type TransactionType = 'topup' | 'transfer' | 'auto_debit' | 'refund' | 'loan_disbursement';
 
 export interface Wallet {
   id: string;
@@ -176,6 +208,7 @@ export interface LoanTemplate {
   id: string;
   userId: string;
   templateName: string;
+  amount: number;
   interestRate: number;
   frequency: LoanFrequency;
   installments: number;
@@ -185,6 +218,7 @@ export interface LoanTemplate {
 
 export interface CreateTemplateData {
   templateName: string;
+  amount: number;
   interestRate?: number;
   frequency: LoanFrequency;
   installments: number;
@@ -221,11 +255,20 @@ export interface PlatformStats {
   overdueLoans: number;
   totalVolume: number;
   completedLoans: number;
+  flaggedLoans: number;
+  platformRevenue?: number;
+  totalFeeTransactions?: number;
 }
 
 export interface UserWithStats extends User {
   loanCount: number;
   borrowCount: number;
+}
+
+export interface AdminUserDetail {
+  user: UserWithStats;
+  loansAsLender: Loan[];
+  loansAsBorrower: Loan[];
 }
 
 // ===========================================

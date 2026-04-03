@@ -26,14 +26,14 @@ export function WalletWidget({
   const getTransactionIcon = (type: string) => {
     switch (type) {
       case 'topup':
-        return <Plus className="w-4 h-4 text-green-600" />;
+        return <Plus className="w-4 h-4 text-emerald-600" />;
       case 'transfer':
       case 'auto_debit':
-        return <ArrowUpRight className="w-4 h-4 text-red-600" />;
+        return <ArrowUpRight className="w-4 h-4 text-rose-500" />;
       case 'refund':
-        return <RefreshCw className="w-4 h-4 text-blue-600" />;
+        return <RefreshCw className="w-4 h-4 text-indigo-600" />;
       default:
-        return <ArrowDownLeft className="w-4 h-4 text-gray-600" />;
+        return <ArrowDownLeft className="w-4 h-4 text-slate-600" />;
     }
   };
 
@@ -51,14 +51,14 @@ export function WalletWidget({
     <Card>
       <CardContent className={compact ? 'p-4' : 'p-6'}>
         {/* Balance Display */}
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
               <Wallet className="w-6 h-6 text-white" />
             </div>
             <div>
-              <p className="text-sm text-gray-500">Wing Wallet Balance</p>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-sm text-slate-500 font-medium">My Wallet</p>
+              <p className="text-2xl font-bold text-slate-900">
                 {formatCurrency(balance, currency)}
               </p>
             </div>
@@ -73,15 +73,15 @@ export function WalletWidget({
 
         {/* Recent Transactions */}
         {recentTransactions.length > 0 && (
-          <div className="border-t border-gray-200 pt-4">
+          <div className="border-t border-slate-100 pt-4">
             <div className="flex items-center justify-between mb-3">
-              <h4 className="text-sm font-medium text-gray-700">
+              <h4 className="text-sm font-semibold text-slate-700">
                 Recent Transactions
               </h4>
               {!compact && (
                 <Link
                   href="/wallet"
-                  className="text-xs text-blue-600 hover:text-blue-700"
+                  className="text-xs text-indigo-600 hover:text-indigo-700 font-semibold transition-colors"
                 >
                   View All
                 </Link>
@@ -91,27 +91,27 @@ export function WalletWidget({
               {recentTransactions.map((tx) => (
                 <div
                   key={tx.id}
-                  className="flex items-center justify-between text-sm"
+                  className="flex items-center justify-between text-sm group"
                 >
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-xl bg-slate-50 flex items-center justify-center group-hover:bg-slate-100 transition-colors">
                       {getTransactionIcon(tx.type)}
                     </div>
                     <div>
-                      <p className="text-gray-900 font-medium">
+                      <p className="text-slate-900 font-medium">
                         {tx.note || tx.type.replace('_', ' ')}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-slate-400">
                         {formatRelativeTime(tx.createdAt)}
                       </p>
                     </div>
                   </div>
                   <div className="text-right">
                     <p
-                      className={`font-medium ${
+                      className={`font-semibold ${
                         tx.type === 'topup' || tx.type === 'refund'
-                          ? 'text-green-600'
-                          : 'text-gray-900'
+                          ? 'text-emerald-600'
+                          : 'text-slate-900'
                       }`}
                     >
                       {tx.type === 'topup' || tx.type === 'refund' ? '+' : '-'}
@@ -126,8 +126,8 @@ export function WalletWidget({
         )}
 
         {recentTransactions.length === 0 && (
-          <div className="border-t border-gray-200 pt-4 text-center">
-            <p className="text-sm text-gray-500">No transactions yet</p>
+          <div className="border-t border-slate-100 pt-4 text-center">
+            <p className="text-sm text-slate-400">No transactions yet</p>
           </div>
         )}
       </CardContent>

@@ -29,9 +29,9 @@ export default function WalletPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Wing Wallet</h1>
+        <h1 className="text-2xl font-bold text-gray-900">My Wallet</h1>
         <p className="text-gray-600">
-          Manage your mock Wing wallet balance and transactions
+          Manage your wallet balance and transactions
         </p>
       </div>
 

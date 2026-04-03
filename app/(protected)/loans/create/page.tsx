@@ -1,11 +1,14 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useLoans } from '@/hooks/useLoans';
+import { templatesApi } from '@/lib/api';
 import { createLoanSchema, type CreateLoanFormData } from '@/lib/validations';
+import type { LoanTemplate, User } from '@/types';
+import { UserSelector } from '@/components/loans/UserSelector';
 import {
   Card,
   CardHeader,
@@ -18,19 +21,26 @@ import {
   Select,
 } from '@/components/ui';
 import { formatCurrency, calculateTotalAmount, calculateInstallmentAmount } from '@/lib/utils';
-import { ArrowLeft, Calculator } from 'lucide-react';
+import { ArrowLeft, Calculator, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function CreateLoanPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const templateId = searchParams.get('templateId');
   const { createLoan } = useLoans();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isLoadingTemplate, setIsLoadingTemplate] = useState(!!templateId);
+  const [templateData, setTemplateData] = useState<LoanTemplate | null>(null);
+  const [selectedBorrower, setSelectedBorrower] = useState<User | null>(null);
 
   const {
     register,
     handleSubmit,
     watch,
+    reset,
+    setValue,
     formState: { errors },
   } = useForm<CreateLoanFormData>({
     resolver: zodResolver(createLoanSchema),
@@ -44,6 +54,44 @@ export default function CreateLoanPage() {
       autoDebit: false,
     },
   });
+
+  // Update form borrowerEmail when selectedBorrower changes
+  useEffect(() => {
+    if (selectedBorrower?.email) {
+      setValue('borrowerEmail', selectedBorrower.email);
+    }
+  }, [selectedBorrower, setValue]);
+
+  // Load template if templateId is provided
+  useEffect(() => {
+    if (templateId) {
+      const loadTemplate = async () => {
+        try {
+          const templates = await templatesApi.getAll();
+          const found = templates.find((t) => t.id === templateId);
+          if (found) {
+            setTemplateData(found);
+            // Reset form with template data
+            reset({
+              borrowerEmail: '',
+              principal: 0,
+              interestRate: found.interestRate,
+              installments: found.installments,
+              frequency: found.frequency,
+              startDate: new Date().toISOString().split('T')[0],
+              autoDebit: found.autoDebit,
+              templateId: found.id,
+            });
+          }
+        } catch (err) {
+          console.error('Failed to load template:', err);
+        } finally {
+          setIsLoadingTemplate(false);
+        }
+      };
+      loadTemplate();
+    }
+  }, [templateId, reset]);
 
   // Watch values for preview
   const principal = watch('principal') || 0;
@@ -72,6 +120,14 @@ export default function CreateLoanPage() {
     { value: 'monthly', label: 'Monthly' },
   ];
 
+  if (isLoadingTemplate) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Back Link */}
@@ -87,7 +143,10 @@ export default function CreateLoanPage() {
         <CardHeader>
           <CardTitle>Create New Loan</CardTitle>
           <CardDescription>
-            Fill in the details to create a new loan agreement.
+            {templateData
+              ? `Using template: ${templateData.templateName}. Just fill in the borrower email and principal amount.`
+              : 'Fill in the details to create a new loan agreement.'
+            }
           </CardDescription>
         </CardHeader>
 
@@ -99,14 +158,11 @@ export default function CreateLoanPage() {
               </div>
             )}
 
-            {/* Borrower Email */}
-            <Input
-              label="Borrower Email"
-              type="email"
-              placeholder="borrower@email.com"
-              helperText="The borrower will receive a notification to accept this loan"
-              error={errors.borrowerEmail?.message}
-              {...register('borrowerEmail')}
+            {/* Borrower Selection */}
+            <UserSelector
+              onSelect={setSelectedBorrower}
+              selectedUser={selectedBorrower}
+              placeholder="Search by email (chhengthai@gmail.com) or name (Chhengthai)..."
             />
 
             {/* Amount & Interest */}
@@ -167,7 +223,7 @@ export default function CreateLoanPage() {
                 {...register('autoDebit')}
               />
               <label htmlFor="autoDebit" className="text-sm text-gray-700">
-                Enable auto-debit from borrower&apos;s Wing wallet
+                Enable auto-debit from borrower's wallet
               </label>
             </div>
 

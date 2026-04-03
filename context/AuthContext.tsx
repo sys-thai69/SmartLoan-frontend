@@ -88,7 +88,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Logout
   const logout = useCallback(async () => {
-    await authApi.logout();
+    try {
+      await authApi.logout();
+    } catch {
+      // Ignore errors — JWT is stateless, local cleanup is what matters
+    }
     storage.remove('token');
     storage.remove('user');
     setUser(null);
