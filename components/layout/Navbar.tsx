@@ -77,7 +77,7 @@ export function Navbar() {
           {/* Logo */}
           <Link href="/dashboard" className="flex items-center gap-2.5">
             <Image
-              src="/Smartloan-logo.png"
+              src="/smartloan-logo.png"
               alt="SmartLoan"
               width={269}
               height={245}
