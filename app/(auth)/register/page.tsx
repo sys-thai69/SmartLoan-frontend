@@ -149,7 +149,7 @@ export default function RegisterPage() {
           <div className="text-center mb-6">
             <Link href="/" className="inline-flex items-center gap-2.5 justify-center">
               <Image
-                src="/Smartloan-logo.png"
+                src="/smartloan-logo.png"
                 alt="SmartLoan"
                 width={269}
                 height={245}

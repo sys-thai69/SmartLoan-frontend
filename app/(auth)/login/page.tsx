@@ -52,7 +52,7 @@ export default function LoginPage() {
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2.5">
             <Image
-              src="/Smartloan-logo.png"
+              src="/smartloan-logo.png"
               alt="SmartLoan"
               width={269}
               height={245}

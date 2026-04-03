@@ -48,7 +48,7 @@ export function Navbar() {
           <div className="flex items-center justify-between h-16">
             <Link href="/" className="flex items-center gap-2.5">
               <Image
-                src="/Smartloan-logo.png"
+                src="/smartloan-logo.png"
                 alt="SmartLoan"
                 width={269}
                 height={245}
